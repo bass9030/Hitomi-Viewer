@@ -1,0 +1,22 @@
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\MainWindow.g.cs
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\App.g.cs
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer_MarkupCompile.cache
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer_MarkupCompile.lref
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\bin\Debug\Hitomi Viewer.exe.config
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\bin\Debug\Hitomi Viewer.exe
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\bin\Debug\Hitomi Viewer.pdb
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\bin\Debug\Newtonsoft.Json.dll
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\bin\Debug\Newtonsoft.Json.xml
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.csprojAssemblyReference.cache
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\MainWindow.baml
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.g.resources
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\Hitomi_Viewer.Properties.Resources.resources
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.csproj.GenerateResource.cache
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.csproj.CoreCompileInputs.cache
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.csproj.CopyComplete
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.exe
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.pdb
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\bin\Debug\Imazen.WebP.dll
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\bin\Debug\Imazen.WebP.xml
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\bin\Debug\libwebp.dll
+C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer_Content.g.cs

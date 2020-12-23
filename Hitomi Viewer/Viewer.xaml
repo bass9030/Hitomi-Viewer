@@ -1,0 +1,42 @@
+﻿<Page x:Class="Hitomi_Viewer.Viewer"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:gif="http://wpfanimatedgif.codeplex.com"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="670"
+      Title="Viewer">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50*"/>
+            <RowDefinition Height="10*"/>
+            <RowDefinition Height="500*"/>
+        </Grid.RowDefinitions>
+        <CheckBox x:Name="is_full_spread" IsChecked="True" Content="full spread" Grid.Row="0" Margin="10 0 0 0" HorizontalAlignment="Left" VerticalAlignment="Center" Checked="is_full_spread_Checked" Unchecked="is_full_spread_Unchecked"/>
+        <ComboBox x:Name="page_num" Grid.Row="0" Width="100" Margin="100 0 0 0" HorizontalAlignment="Left" VerticalAlignment="Center" SelectionChanged="page_num_DataContextChanged"/>
+        <ProgressBar Grid.Row="1" x:Name="loading_bar"/>
+        <Grid x:Name="Single" Grid.Row="2" Visibility="Hidden">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100*"/>
+                <ColumnDefinition Width="180*"/>
+                <ColumnDefinition Width="100*"/>
+            </Grid.ColumnDefinitions>
+            <Grid x:Name="single_page_grid" Margin="0 0 0 0" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="1" Background="Transparent" PreviewMouseLeftButtonDown="single_page_MouseDown">
+                <Image x:Name="single_page" gif:ImageBehavior.AnimatedSource="Loading.gif" Stretch="None"/>
+            </Grid>
+        </Grid>
+        <Grid x:Name="full" Grid.Row="2" Visibility="Visible">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="500*"/>
+                <ColumnDefinition Width="500*"/>
+            </Grid.ColumnDefinitions>
+            <Grid x:Name="full_page_1_grid" Grid.Column="0" Background="Transparent" PreviewMouseLeftButtonDown="full_page_1_MouseDown">
+                <Image x:Name="full_page_1" gif:ImageBehavior.AnimatedSource="Loading.gif" Stretch="None"/>
+            </Grid>
+            <Grid x:Name="full_page_2_grid" Grid.Column="1" Background="Transparent" PreviewMouseLeftButtonDown="full_page_2_MouseDown">
+                <Image x:Name="full_page_2" gif:ImageBehavior.AnimatedSource="Loading.gif" Stretch="None"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</Page>
