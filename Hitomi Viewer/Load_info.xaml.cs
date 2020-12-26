@@ -1,5 +1,6 @@
 ﻿using Hitomi_Core;
 using Imazen.WebP;
+using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using Newtonsoft.Json.Linq;
 using System;
@@ -8,6 +9,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -22,6 +24,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using System.Security.Cryptography;
 
 namespace Hitomi_Viewer
 {
@@ -49,12 +52,12 @@ namespace Hitomi_Viewer
                 }
                 else
                 {
-                    bookmark = new JObject(Properties.Settings.Default.bookmark);
+                    bookmark = JObject.Parse(Properties.Settings.Default.bookmark);
                 }
             }
-            catch
+            catch(Exception ex)
             {
-                MessageBox.Show("저장된 설정값을 불러올 수 없습니다.\n이전에 설정한 값들이 초기화되거나 이전으로 돌아갈 수 있습니다.");
+                MessageBox.Show("저장된 설정값을 불러올 수 없습니다.\n이전에 설정한 값들이 초기화되거나 이전으로 돌아갈 수 있습니다.\n\n" + ex.ToString(), "", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -67,6 +70,8 @@ namespace Hitomi_Viewer
         {
             bookmark[keyword.Text] = Load_at_page_num.SelectedIndex + 1;
             Properties.Settings.Default.bookmark = bookmark.ToString();
+            Properties.Settings.Default.Save();
+            Console.WriteLine(bookmark);
         }
 
         private void keyword_PreviewKeyDown(object sender, TextCompositionEventArgs e)
@@ -182,7 +187,7 @@ namespace Hitomi_Viewer
                 {
                     wc.Headers.Add("Referer", "https://hitomi.la/reader/" + gallery_num + ".html");
                     Byte[] Mydata = wc.DownloadData(thumbnail_image);
-                    string subtitles = "Artist: " + hitomi.Artist + "\n" +
+                    string subtitles = "Artist: " + hitomi.Artist + "(" + hitomi.Group + ")\n" +
                         "Series: " + hitomi.Series + "\n" +
                         "Type: " + hitomi.type + "\n" +
                         "Language: " + hitomi.language + "\n" +
@@ -220,10 +225,18 @@ namespace Hitomi_Viewer
 
                 Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                 {
-                    if(bookmark[hitomi.gallery_id] != null)
+                    try
                     {
-                        Load_at_page.IsChecked = true;
-                        Load_at_page_num.SelectedIndex = bookmark.Value<int>(hitomi.gallery_id) - 1;
+                        if (bookmark[hitomi.gallery_id] != null && bookmark.Value<int>(hitomi.gallery_id) != 0)
+                        {
+                            Load_at_page.IsChecked = true;
+                            Load_at_page_num.SelectedIndex = bookmark.Value<int>(hitomi.gallery_id) - 1;
+                        }
+                    }
+                    catch
+                    {
+                        bookmark.Property(gallery_num).Remove();
+                        MessageBox.Show("북마크 로드 실패", "", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }));
             }
@@ -247,27 +260,54 @@ namespace Hitomi_Viewer
         private void Load_at_page_Checked(object sender, RoutedEventArgs e)
         {
             Load_at_page_num.IsEnabled = true;
+            Console.WriteLine(bookmark);
         }
 
         private void Load_at_page_Unchecked(object sender, RoutedEventArgs e)
         {
             Load_at_page_num.IsEnabled = false;
-            bookmark[hitomi.gallery_id] = null;
+            bookmark.Property(gallery_num).Remove();
+            Load_at_page_num.SelectedIndex = -1;
+            Console.WriteLine(bookmark);
             Properties.Settings.Default.bookmark = bookmark.ToString();
+            Properties.Settings.Default.Save();
         }
 
         private void Download_Click(object sender, RoutedEventArgs e)
         {
-            CommonOpenFileDialog diglog = new CommonOpenFileDialog();
-            diglog.IsFolderPicker = true;
-            diglog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            diglog.Title = "저장할 폴더 선택...";
-            if(diglog.ShowDialog() == CommonFileDialogResult.Ok)
+            System.Windows.Forms.FolderBrowserDialog diglog = new System.Windows.Forms.FolderBrowserDialog();
+            diglog.RootFolder = Environment.SpecialFolder.Desktop;
+            diglog.Description = "저장할 폴더 선택...";
+            if(diglog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                Download_Window down = new Download_Window(hitomi.title, hitomi.images, diglog.FileName, gallery_num);
+                Download_Window down = new Download_Window(hitomi.title, hitomi.images, diglog.SelectedPath, gallery_num);
                 down.ShowActivated = true;
                 down.Show();
             }
+        }
+
+        private void Load_at_file_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog diglog = new OpenFileDialog();
+            diglog.Filter = "압축 파일 (*.zip)|*.zip";
+            diglog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            diglog.Multiselect = false;
+            diglog.Title = "파일 선택...";
+            if (diglog.ShowDialog() == true)
+            {
+                Viewer viewer = new Viewer(new string[] { diglog.FileName }, 1, null, true);
+                NavigationService.Navigate(viewer, UriKind.Relative);
+            }
+        }
+
+        private void Reset_settings_file_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("정말로 설정파일을 초기화 하시겠습니까?\n초기화시 북마크와 풀페이지 모드 여부가 기본값으로 돌아갑니다.", "", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
+                return;
+            Properties.Settings.Default.is_full_page = true;
+            Properties.Settings.Default.bookmark = "";
+            Properties.Settings.Default.Save();
+            MessageBox.Show("완료되었습니다.", "", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

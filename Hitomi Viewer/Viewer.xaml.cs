@@ -3,15 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -25,7 +24,7 @@ namespace Hitomi_Viewer
     public partial class Viewer : Page
     {
         string[] images;
-        List<BitmapImage> sort_images;
+        BitmapImage[] sort_images;
         string gallery_num;
         int startnum;//not index number! this is start at 1!
         int single_page_num;//not index number! this is start at 1!
@@ -34,28 +33,55 @@ namespace Hitomi_Viewer
         bool is_full = true;
         bool is_first_page;
         BackgroundWorker Image_loading;
+        bool is_local;
+        string zipath;
 
-        public Viewer(string[] _images, int _startnum, string _gallery_num)
+        public Viewer(string[] _images, int _startnum, string _gallery_num, bool _is_local = false)
         {
             InitializeComponent();
-            images = _images;
-            startnum = _startnum;
-            gallery_num = _gallery_num;
-            single_page_num = startnum;
-            full_page_index = (int)Math.Truncate((double)startnum / 2);
-            if(_startnum != 1)
-            {
-                single_page_num = startnum;
-                full_page_index = (int)Math.Truncate((double)single_page_num / 2);
-            }
-            Image_loading = new BackgroundWorker();
-            Image_loading.WorkerReportsProgress = true;
-            is_first_page = (_startnum == 1);
-            is_full = Properties.Settings.Default.is_full_page;
-            Image_loading.ProgressChanged += Image_loading_ProgressChanged;
-            Image_loading.DoWork += Image_loading_DoWork;
-            Image_loading.RunWorkerCompleted += Image_loading_RunWorkerCompleted;
+            is_local = _is_local;
             Loaded += Viewer_Loaded;
+            if (!is_local)
+            {
+                images = _images;
+                startnum = _startnum;
+                gallery_num = _gallery_num;
+                if (_startnum != 1)
+                {
+                    single_page_num = startnum;
+                    full_page_index = (int)Math.Truncate((double)single_page_num / 2);
+                }
+                else
+                {
+                    single_page_num = startnum;
+                    full_page_index = (int)Math.Truncate((double)startnum / 2);
+                }
+                Image_loading = new BackgroundWorker();
+                Image_loading.WorkerSupportsCancellation = true;
+                Image_loading.WorkerReportsProgress = true;
+                is_first_page = (_startnum == 1);
+                is_full = Properties.Settings.Default.is_full_page;
+                Image_loading.ProgressChanged += Image_loading_ProgressChanged;
+                Image_loading.DoWork += Image_loading_DoWork;
+                Image_loading.RunWorkerCompleted += Image_loading_RunWorkerCompleted;
+            }
+            else
+            {
+                zipath = _images[0];
+                using (ZipArchive zip = ZipFile.OpenRead(zipath))
+                {
+                    images = new string[zip.Entries.Count];
+                }
+                startnum = 1;
+                single_page_num = 1;
+                full_page_index = 0;
+                is_first_page = (startnum == 1);
+                Image_loading = new BackgroundWorker();
+                Image_loading.WorkerReportsProgress = true;
+                Image_loading.ProgressChanged += Image_loading_ProgressChanged;
+                Image_loading.RunWorkerCompleted += Image_loading_RunWorkerCompleted;
+                Image_loading.DoWork += Image_loading_DoWork;
+            }
         }
 
         private void Image_loading_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -134,70 +160,368 @@ namespace Hitomi_Viewer
             return image;
         }
 
+        public static byte[] ReadToEnd(Stream stream)
+        {
+            long originalPosition = 0;
+
+            if (stream.CanSeek)
+            {
+                originalPosition = stream.Position;
+                stream.Position = 0;
+            }
+
+            try
+            {
+                byte[] readBuffer = new byte[4096];
+
+                int totalBytesRead = 0;
+                int bytesRead;
+
+                while ((bytesRead = stream.Read(readBuffer, totalBytesRead, readBuffer.Length - totalBytesRead)) > 0)
+                {
+                    totalBytesRead += bytesRead;
+
+                    if (totalBytesRead == readBuffer.Length)
+                    {
+                        int nextByte = stream.ReadByte();
+                        if (nextByte != -1)
+                        {
+                            byte[] temp = new byte[readBuffer.Length * 2];
+                            Buffer.BlockCopy(readBuffer, 0, temp, 0, readBuffer.Length);
+                            Buffer.SetByte(temp, totalBytesRead, (byte)nextByte);
+                            readBuffer = temp;
+                            totalBytesRead++;
+                        }
+                    }
+                }
+
+                byte[] buffer = readBuffer;
+                if (readBuffer.Length != totalBytesRead)
+                {
+                    buffer = new byte[totalBytesRead];
+                    Buffer.BlockCopy(readBuffer, 0, buffer, 0, totalBytesRead);
+                }
+                return buffer;
+            }
+            finally
+            {
+                if (stream.CanSeek)
+                {
+                    stream.Position = originalPosition;
+                }
+            }
+        }
+
         private void Image_loading_DoWork(object sender, DoWorkEventArgs e)
         {
-            sort_images = new List<BitmapImage>();
-            for (int i = 0; i < images.Length; i++)
+            sort_images = new BitmapImage[images.Length];
+
+            if (is_local)
             {
-                while (true)
+                using (ZipArchive archive = ZipFile.OpenRead(zipath))
                 {
-                    try
+                    int i = 0;
+                    foreach (ZipArchiveEntry zip in archive.Entries)
                     {
-                        using (WebClient wc = new WebClient())
+                        if (Image_loading.CancellationPending == true)
                         {
-                            wc.Headers.Add("Referer", $"https://hitomi.la/reader/{gallery_num}.html");
-                            Byte[] image = wc.DownloadData(images[i]);
-                            wc.Dispose();
-                            sort_images.Add(LoadImage(image, images[i].Split('.').Last()));
-                            Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+                            e.Cancel = true;
+                            return;
+                        }
+                        while (true)
+                        {
+                            try
                             {
-                                if (single_page_num == 1)
+                                Byte[] image = ReadToEnd(zip.Open());
+                                sort_images[i] = LoadImage(image, zip.FullName.Split('.').Last());
+                                Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                 {
-                                    ImageBehavior.SetAnimatedSource(single_page, null);
-                                    single_page.Stretch = Stretch.Uniform;
-                                    page_num.SelectedIndex = 0;
-                                    full_page_index = 0;
-                                    single_page_num = 1;
-                                    single_page.Source = sort_images[0];
-                                }
-                                else
-                                {
-                                    if (is_full)
+                                    if (single_page_num == 1)
                                     {
-                                        if (full_page_index == (int)Math.Truncate((double)i / 2))
-                                        {
-                                            ImageBehavior.SetAnimatedSource(full_page_1, null);
-                                            ImageBehavior.SetAnimatedSource(full_page_2, null);
-                                            full_page_1.Stretch = Stretch.Uniform;
-                                            full_page_2.Stretch = Stretch.Uniform;
-                                            full_page_1.Source = sort_images[index_page[(int)Math.Truncate((double)i / 2)][0]];
-                                            full_page_2.Source = sort_images[index_page[(int)Math.Truncate((double)i / 2)][1]];
-                                        }
+                                        ImageBehavior.SetAnimatedSource(single_page, null);
+                                        single_page.Stretch = Stretch.Uniform;
+                                        page_num.SelectedIndex = 0;
+                                        full_page_index = 0;
+                                        single_page_num = 1;
+                                        single_page.Source = sort_images[0];
                                     }
                                     else
                                     {
-                                        if (single_page_num == i + 1)
+                                        //아직 파일 로드시 북마크는 구현이 안됨
+
+                                        if (is_full)
+                                        {
+                                            if (full_page_index == (int)Math.Truncate((double)i / 2))
+                                            {
+                                                ImageBehavior.SetAnimatedSource(full_page_1, null);
+                                                ImageBehavior.SetAnimatedSource(full_page_2, null);
+                                                full_page_1.Stretch = Stretch.Uniform;
+                                                full_page_2.Stretch = Stretch.Uniform;
+                                                full_page_1.Source = sort_images[index_page[(int)Math.Truncate((double)i / 2)][0]];
+                                                full_page_2.Source = sort_images[index_page[(int)Math.Truncate((double)i / 2)][1]];
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (single_page_num == i + 1)
+                                            {
+                                                ImageBehavior.SetAnimatedSource(single_page, null);
+                                                single_page.Stretch = Stretch.Uniform;
+                                                page_num.SelectedIndex = i;
+                                                single_page_num = i + 1;
+                                                single_page.Source = sort_images[i];
+                                            }
+                                        }
+                                    }
+                                }));
+                                i++;
+                                Image_loading.ReportProgress((int)Math.Round((double)(100 * (i + 1)) / images.Length));
+                                break;
+                            }
+                            catch
+                            {
+                                if (MessageBox.Show((i + 1) + "번째 이미지 로딩 실패\n다시 로드하시겠습니까?", "", MessageBoxButton.YesNo, MessageBoxImage.Error) == MessageBoxResult.Yes)
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    sort_images[i] = null;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (is_first_page)
+                {
+                    for (int i = 0; i < images.Length; i++)
+                    {
+                        if (Image_loading.CancellationPending == true)
+                        {
+                            e.Cancel = true;
+                            return;
+                        }
+                        while (true)
+                        {
+                            if (Image_loading.CancellationPending == true)
+                            {
+                                e.Cancel = true;
+                                return;
+                            }
+                            try
+                            {
+                                using (WebClient wc = new WebClient())
+                                {
+                                    wc.Headers.Add("Referer", $"https://hitomi.la/reader/{gallery_num}.html");
+                                    Byte[] image = wc.DownloadData(images[i]);
+                                    wc.Dispose();
+                                    sort_images[i] = LoadImage(image, images[i].Split('.').Last());
+                                    Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+                                    {
+                                        if (single_page_num == 1)
                                         {
                                             ImageBehavior.SetAnimatedSource(single_page, null);
                                             single_page.Stretch = Stretch.Uniform;
-                                            page_num.SelectedIndex = i;
-                                            single_page_num = i + 1;
-                                            single_page.Source = sort_images[i];
+                                            page_num.SelectedIndex = 0;
+                                            full_page_index = 0;
+                                            single_page_num = 1;
+                                            single_page.Source = sort_images[0];
                                         }
-                                    }
+                                        else
+                                        {
+                                            if (is_full)
+                                            {
+                                                if (full_page_index == (int)Math.Truncate((double)i / 2))
+                                                {
+                                                    ImageBehavior.SetAnimatedSource(full_page_1, null);
+                                                    ImageBehavior.SetAnimatedSource(full_page_2, null);
+                                                    full_page_1.Stretch = Stretch.Uniform;
+                                                    full_page_2.Stretch = Stretch.Uniform;
+                                                    full_page_1.Source = sort_images[index_page[(int)Math.Truncate((double)i / 2)][0]];
+                                                    full_page_2.Source = sort_images[index_page[(int)Math.Truncate((double)i / 2)][1]];
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if (single_page_num == i + 1)
+                                                {
+                                                    ImageBehavior.SetAnimatedSource(single_page, null);
+                                                    single_page.Stretch = Stretch.Uniform;
+                                                    page_num.SelectedIndex = i;
+                                                    single_page_num = i + 1;
+                                                    single_page.Source = sort_images[i];
+                                                }
+                                            }
+                                        }
+                                    }));
+                                    Image_loading.ReportProgress((int)Math.Round((double)(100 * (i + 1)) / images.Length));
+                                    break;
                                 }
-                            }));
-                            Image_loading.ReportProgress((int)Math.Round((double)(100 * (i + 1)) / images.Length));
-                            break;
+                            }
+                            catch (Exception ex)
+                            {
+                                if (MessageBox.Show((i + 1).ToString() + "번째 이미지 로드 실패.\n다시 시도하시겠습니까?\n\n" + ex.ToString(), "", MessageBoxButton.YesNo, MessageBoxImage.Error) == MessageBoxResult.Yes)
+                                    continue;
+                                else
+                                    sort_images[i] = null;
+                            }
                         }
                     }
-                    catch(Exception ex)
+                }
+                else
+                {
+                    int progress = 1;
+                    for (int i = index_page[(int)Math.Truncate((double)single_page_num / 2)][0]; i < images.Length; i++)
                     {
-                        if (MessageBox.Show((i + 1).ToString() + "번째 이미지 다운로드 실패.\n다시 시도하시겠습니까?\n\n" + ex.ToString(), "", MessageBoxButton.YesNo, MessageBoxImage.Error) == MessageBoxResult.Yes)
-                            continue;
-                        else
+                        if (Image_loading.CancellationPending == true)
                         {
-                            sort_images.Add(null);
+                            e.Cancel = true;
+                            return;
+                        }
+                        while (true)
+                        {
+                            if (Image_loading.CancellationPending == true)
+                            {
+                                e.Cancel = true;
+                                return;
+                            }
+                            try
+                            {
+                                using (WebClient wc = new WebClient())
+                                {
+                                    wc.Headers.Add("Referer", $"https://hitomi.la/reader/{gallery_num}.html");
+                                    Byte[] image = wc.DownloadData(images[i]);
+                                    wc.Dispose();
+                                    sort_images[i] = LoadImage(image, images[i].Split('.').Last());
+                                    Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+                                    {
+                                        if (single_page_num == 1)
+                                        {
+                                            ImageBehavior.SetAnimatedSource(single_page, null);
+                                            single_page.Stretch = Stretch.Uniform;
+                                            page_num.SelectedIndex = 0;
+                                            full_page_index = 0;
+                                            single_page_num = 1;
+                                            single_page.Source = sort_images[0];
+                                        }
+                                        else
+                                        {
+                                            if (is_full)
+                                            {
+                                                if (full_page_index == (int)Math.Truncate((double)i / 2))
+                                                {
+                                                    ImageBehavior.SetAnimatedSource(full_page_1, null);
+                                                    ImageBehavior.SetAnimatedSource(full_page_2, null);
+                                                    full_page_1.Stretch = Stretch.Uniform;
+                                                    full_page_2.Stretch = Stretch.Uniform;
+                                                    full_page_1.Source = sort_images[index_page[(int)Math.Truncate((double)i / 2)][0]];
+                                                    full_page_2.Source = sort_images[index_page[(int)Math.Truncate((double)i / 2)][1]];
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if (single_page_num == i + 1)
+                                                {
+                                                    ImageBehavior.SetAnimatedSource(single_page, null);
+                                                    single_page.Stretch = Stretch.Uniform;
+                                                    page_num.SelectedIndex = i;
+                                                    single_page_num = i + 1;
+                                                    single_page.Source = sort_images[i];
+                                                }
+                                            }
+                                        }
+                                    }));
+                                    Image_loading.ReportProgress((int)Math.Round((double)(100 * (progress)) / images.Length));
+                                    progress++;
+                                    break;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                if (MessageBox.Show((i + 1).ToString() + "번째 이미지 로드 실패.\n다시 시도하시겠습니까?\n\n" + ex.ToString(), "", MessageBoxButton.YesNo, MessageBoxImage.Error) == MessageBoxResult.Yes)
+                                    continue;
+                                else
+                                    sort_images[i] = null;
+                            }
+                        }
+                    }
+                    for (int i = 0; i < images.Length; i++)
+                    {
+                        if (Image_loading.CancellationPending == true)
+                        {
+                            e.Cancel = true;
+                            break;
+                        }
+                        if (sort_images[i] != null)
+                            break;
+                        while (true)
+                        {
+                            if (Image_loading.CancellationPending == true)
+                        {
+                            e.Cancel = true;
+                            break;
+                        }
+                            try
+                            {
+                                using (WebClient wc = new WebClient())
+                                {
+                                    wc.Headers.Add("Referer", $"https://hitomi.la/reader/{gallery_num}.html");
+                                    Byte[] image = wc.DownloadData(images[i]);
+                                    wc.Dispose();
+                                    sort_images[i] = LoadImage(image, images[i].Split('.').Last());
+                                    Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+                                    {
+                                        if (single_page_num == 1)
+                                        {
+                                            ImageBehavior.SetAnimatedSource(single_page, null);
+                                            single_page.Stretch = Stretch.Uniform;
+                                            page_num.SelectedIndex = 0;
+                                            full_page_index = 0;
+                                            single_page_num = 1;
+                                            single_page.Source = sort_images[0];
+                                        }
+                                        else
+                                        {
+                                            if (is_full)
+                                            {
+                                                if (full_page_index == (int)Math.Truncate((double)i / 2))
+                                                {
+                                                    ImageBehavior.SetAnimatedSource(full_page_1, null);
+                                                    ImageBehavior.SetAnimatedSource(full_page_2, null);
+                                                    full_page_1.Stretch = Stretch.Uniform;
+                                                    full_page_2.Stretch = Stretch.Uniform;
+                                                    full_page_1.Source = sort_images[index_page[(int)Math.Truncate((double)i / 2)][0]];
+                                                    full_page_2.Source = sort_images[index_page[(int)Math.Truncate((double)i / 2)][1]];
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if (single_page_num == i + 1)
+                                                {
+                                                    ImageBehavior.SetAnimatedSource(single_page, null);
+                                                    single_page.Stretch = Stretch.Uniform;
+                                                    page_num.SelectedIndex = i;
+                                                    single_page_num = i + 1;
+                                                    single_page.Source = sort_images[i];
+                                                }
+                                            }
+                                        }
+                                    }));
+                                    Image_loading.ReportProgress((int)Math.Round((double)(100 * (progress)) / images.Length));
+                                    progress++;
+                                    break;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                if (MessageBox.Show((i + 1).ToString() + "번째 이미지 로드 실패.\n다시 시도하시겠습니까?\n\n" + ex.ToString(), "", MessageBoxButton.YesNo, MessageBoxImage.Error) == MessageBoxResult.Yes)
+                                    continue;
+                                else
+                                    sort_images[i] = null;
+                            }
                         }
                     }
                 }
@@ -263,6 +587,7 @@ namespace Hitomi_Viewer
         {
             is_full = true;
             Properties.Settings.Default.is_full_page = true;
+            Properties.Settings.Default.Save();
             if (page_num == null || single_page == null || full == null)
                 return;
             if (single_page_num != 1)
@@ -324,6 +649,7 @@ namespace Hitomi_Viewer
         {
             is_full = false;
             Properties.Settings.Default.is_full_page = false;
+            Properties.Settings.Default.Save();
             if (page_num == null || single_page == null || full == null)
                 return;
             full.Visibility = Visibility.Hidden;
@@ -335,7 +661,6 @@ namespace Hitomi_Viewer
             }
             /*if (sort_images.Count != images.Length)
                 return;*/
-            Console.WriteLine(single_page_num);
             if (single_page_num <= 0)
                 single_page_num = 1;
             page_num.SelectedIndex = single_page_num - 1;
@@ -352,41 +677,39 @@ namespace Hitomi_Viewer
                 List<int> _images = index_page[full_page_index];
                 if (_images.Count == 1)
                 {
-                    Console.WriteLine(1);
                     try
                     {
                         ImageBehavior.SetAnimatedSource(single_page, null);
                         full.Visibility = Visibility.Hidden;
                         Single.Visibility = Visibility.Visible;
+                        if (sort_images[_images[0]] == null)
+                            throw new Exception("image not loading");
                         single_page.Stretch = Stretch.Uniform;
                         single_page.Source = sort_images[_images[0]];
-                        Console.WriteLine("loading done.");
                     }
-                    catch (ArgumentOutOfRangeException)
+                    catch
                     {
-                        Console.WriteLine("loading not done.");
                         single_page.Stretch = Stretch.None;
                         ImageBehavior.SetAnimatedSource(single_page, new BitmapImage(new Uri("pack://siteoforigin:,,,/Resources/Loading.gif")));
                     }
                 }
                 else
                 {
-                    Console.WriteLine(2);
                     try
                     {
                         ImageBehavior.SetAnimatedSource(full_page_1, null);
                         ImageBehavior.SetAnimatedSource(full_page_2, null);
                         Single.Visibility = Visibility.Hidden;
                         full.Visibility = Visibility.Visible;
+                        if (sort_images[_images[0]] == null || sort_images[_images[1]] == null)
+                            throw new Exception("image not loading");
                         full_page_1.Stretch = Stretch.Uniform;
                         full_page_2.Stretch = Stretch.Uniform;
                         full_page_1.Source = sort_images[_images[0]];
                         full_page_2.Source = sort_images[_images[1]];
-                        Console.WriteLine("loading done.");
                     }
-                    catch (ArgumentOutOfRangeException)
+                    catch
                     {
-                        Console.WriteLine("loading not done.");
                         full_page_1.Stretch = Stretch.None;
                         full_page_2.Stretch = Stretch.None;
                         ImageBehavior.SetAnimatedSource(full_page_1, new BitmapImage(new Uri("pack://siteoforigin:,,,/Resources/Loading.gif")));
@@ -398,7 +721,6 @@ namespace Hitomi_Viewer
             {
                 if (page_num.SelectedIndex == -1)
                 {
-                    Console.WriteLine("return");
                     return;
                 }
                 single_page_num = page_num.SelectedIndex + 1;
@@ -406,17 +728,17 @@ namespace Hitomi_Viewer
                 try
                 {
                     ImageBehavior.SetAnimatedSource(single_page, null);
+                    if (sort_images[single_page_num - 1] == null)
+                        throw new Exception("image not loading");
                     single_page.Stretch = Stretch.Uniform;
                     single_page.Source = sort_images[single_page_num - 1];
                 }
-                catch(ArgumentOutOfRangeException)
+                catch
                 {
                     single_page.Stretch = Stretch.None;
                     ImageBehavior.SetAnimatedSource(single_page, new BitmapImage(new Uri("pack://siteoforigin:,,,/Resources/Loading.gif")));
                 }
             }
-            Console.WriteLine($"single_page_num: {single_page_num}");
-            Console.WriteLine($"full_page_index: {full_page_index}");
         }
 
         private void full_page_1_MouseDown(object sender, MouseButtonEventArgs e)
@@ -441,18 +763,25 @@ namespace Hitomi_Viewer
 
         private void single_page_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (!Convert.ToBoolean(is_full_spread.IsChecked) && single_page_num + 1 <= sort_images.Count && single_page_num + 1 > 0)
+            if (!Convert.ToBoolean(is_full_spread.IsChecked) && single_page_num + 1 <= sort_images.Length && single_page_num + 1 > 0)
             {
                 single_page_num++;
                 full_page_index = (int)Math.Truncate((double)single_page_num / 2);
                 page_num.SelectedIndex = single_page_num - 1;
             }
-            else if(Convert.ToBoolean(is_full_spread.IsChecked))
+            else if (Convert.ToBoolean(is_full_spread.IsChecked))
             {
                 full_page_index++;
                 single_page_num += 2;
                 page_num.SelectedIndex = full_page_index;
             }
+        }
+
+        private void goto_search_Click(object sender, RoutedEventArgs e)
+        {
+            Image_loading.CancelAsync();
+            Image_loading.Dispose();
+            NavigationService.Navigate(new Load_info(), UriKind.Relative);
         }
     }
 }

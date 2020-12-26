@@ -8,6 +8,7 @@ using Imazen.WebP;
 using System.Windows.Threading;
 using System.Drawing.Imaging;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace Hitomi_Viewer
 {
@@ -177,7 +178,7 @@ namespace Hitomi_Viewer
                     }
                 }
             }
-            ArchiveFiles(save_path + "\\" + gallery_title + "(" + gallery_num + ").zip", images_with_decoding);
+            ArchiveFiles(save_path + "\\" + Regex.Replace(gallery_title, "[\\\\/:*?\"<>|]", "_") + "(" + gallery_num + ").zip", images_with_decoding);
         }
     }
 }

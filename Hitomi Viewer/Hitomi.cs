@@ -1,13 +1,11 @@
-﻿
-using Microsoft.ClearScript.V8;
+﻿using Microsoft.ClearScript.V8;
 using Newtonsoft.Json.Linq;
 using System;
-using System.IO;
 using System.Net;
 using System.Text;
 using NSoup;
 using NSoup.Nodes;
-using System.Resources;
+using System.Web;
 
 
 namespace Hitomi_Core
@@ -36,9 +34,20 @@ namespace Hitomi_Core
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 | SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
             ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             web.Encoding = Encoding.UTF8;
-            gallery_info = JObject.Parse(web.DownloadString("https://ltn.hitomi.la/galleries/" + _gallery_id + ".js").Split(new string[] { "var galleryinfo = " }, StringSplitOptions.None)[1]); ;
-            gallery_html = web.DownloadString("https://ltn.hitomi.la/galleryblock/" + _gallery_id + ".html");
+            gallery_info = JObject.Parse(web.DownloadString("https://ltn.hitomi.la/galleries/" + _gallery_id + ".js").Split(new string[] { "var galleryinfo = " }, StringSplitOptions.None)[1]);
+            Console.WriteLine($"https://hitomi.la/{gallery_info["type"]}/{HttpUtility.UrlEncode(gallery_info["title"].ToString().Replace(' ', '-').ToLower(new System.Globalization.CultureInfo("en-US"))) + "-" + gallery_info["language_localname"].ToString() + "-" + _gallery_id}.html");
+            gallery_html = web.DownloadString($"https://hitomi.la/{gallery_info["type"]}/{HttpUtility.UrlEncode(gallery_info["title"].ToString().Replace(' ', '-').ToLower(new System.Globalization.CultureInfo("en-US"))) + "-" + gallery_info["language_localname"].ToString() + "-" + _gallery_id}.html");
             gallery_id = _gallery_id;
+        }
+
+        public string Group
+        {
+            get
+            {
+                Document doc = NSoupClient.Parse(gallery_html);
+                string group = doc.Select("div.gallery-info").Select("tr")[0].Select("td")[1].Text();
+                return group;
+            }
         }
 
         public string Artist
@@ -46,8 +55,8 @@ namespace Hitomi_Core
             get
             {
                 Document doc = NSoupClient.Parse(gallery_html);
-                string group = doc.Select("div.artist-list").Text;
-                return (group != "") ? group : "N/A";
+                string Artist = doc.Select("h2").Text;
+                return Artist;
             }
         }
 
@@ -56,7 +65,7 @@ namespace Hitomi_Core
             get
             {
                 Document doc = NSoupClient.Parse(gallery_html);
-                string series = doc.Select("table.dj-desc > tbody")[0].Select("td")[1].Text();
+                string series = doc.Select("div.gallery-info").Select("tr")[3].Select("td")[1].Text();
                 return (series != "") ? series : "N/A";
             }
         }

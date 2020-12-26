@@ -5,5 +5,5 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         ShowsNavigationUI="False"
-        Title="MainWindow" Height="585" Width="1088" Source="Load_info.xaml">
+        Title="MainWindow" Height="831" Width="1438.99" Source="Load_info.xaml">
 </NavigationWindow>

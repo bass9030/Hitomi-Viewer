@@ -5,17 +5,28 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:Hitomi_Viewer"
       mc:Ignorable="d" 
-      d:DesignHeight="585" d:DesignWidth="1088"
+      d:DesignHeight="831" d:DesignWidth="1462.99"
       Title="Load_info">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="64*"/>
+            <RowDefinition Height="10*"/>
+            <RowDefinition Height="40*"/>
             <RowDefinition Height="355*"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5 5 5 5">
+        <DockPanel Grid.Row="0">
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="파일">
+                    <MenuItem x:Name="Load_at_file" Header="파일에서 불러오기" Click="Load_at_file_Click"/>
+                </MenuItem>
+                <MenuItem Header="편집">
+                    <MenuItem x:Name="Reset_settings_file" Header="설정파일 초기화" Click="Reset_settings_file_Click"/>
+                </MenuItem>
+            </Menu>
+        </DockPanel>
+        <Grid Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5 5 5 5">
             <Button x:Name="search" Content="검색" HorizontalAlignment="Right" VerticalAlignment="Center" Width="77" Margin="0 0 10 0" Height="22" Click="search_Click"/>
-            <TextBox x:Name="keyword" Text="" HorizontalAlignment="Left" VerticalAlignment="Center" Width="956" Height="22" Margin="10 0 0 0" DataObject.Pasting="keyword_Pasting" PreviewTextInput="keyword_PreviewKeyDown">
+            <TextBox x:Name="keyword" Text="" HorizontalAlignment="Left" VerticalAlignment="Center" Width="1300" Height="22" Margin="10 0 0 0" DataObject.Pasting="keyword_Pasting" PreviewTextInput="keyword_PreviewKeyDown">
                 <TextBox.Style>
                     <Style TargetType="TextBox" xmlns:sys="clr-namespace:System;assembly=mscorlib">
                         <Style.Resources>
@@ -40,7 +51,7 @@
                 </TextBox.Style>
             </TextBox>
         </Grid>
-        <Grid HorizontalAlignment="Stretch" Margin="5 5 5 5" Grid.Row="1" VerticalAlignment="Stretch">
+        <Grid HorizontalAlignment="Stretch" Margin="5 5 5 5" Grid.Row="2" VerticalAlignment="Stretch">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="128*"/>
                 <ColumnDefinition Width="263*"/>
