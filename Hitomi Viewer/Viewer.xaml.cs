@@ -112,9 +112,10 @@ namespace Hitomi_Viewer
             image.UriSource = null;
             if (ext == "webp")
             {
+                MemoryStream decodeImage = new MemoryStream();
                 SimpleDecoder dec = new SimpleDecoder();
-                dec.DecodeFromBytes(imageData, imageData.Length).Save(mem, ImageFormat.Png);
-                image.StreamSource = mem;
+                dec.DecodeFromBytes(imageData, imageData.Length).Save(decodeImage, ImageFormat.Png);
+                image.StreamSource = decodeImage;
             }
             else if (ext == "avif")
             {
@@ -779,9 +780,73 @@ namespace Hitomi_Viewer
 
         private void goto_search_Click(object sender, RoutedEventArgs e)
         {
-            Image_loading.CancelAsync();
             Image_loading.Dispose();
             NavigationService.Navigate(new Load_info(), UriKind.Relative);
+        }
+
+        private void Page_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.Key == Key.NumPad6 || e.Key == Key.D)
+            {
+                if (is_full)
+                {
+                    if (!(full_page_index + 1 > index_page.Count) && full_page_index + 1 >= 0 && single_page_num + 1 <= images.Length)
+                    {
+                        single_page_num += 2;
+                        full_page_index++;
+                        page_num.SelectedIndex = full_page_index;
+                    }
+                }
+                else
+                {
+                    if (!Convert.ToBoolean(is_full_spread.IsChecked) && single_page_num + 1 <= sort_images.Length && single_page_num + 1 > 0)
+                    {
+                        single_page_num++;
+                        full_page_index = (int)Math.Truncate((double)single_page_num / 2);
+                        page_num.SelectedIndex = single_page_num - 1;
+                    }
+                }
+                
+            }else if(e.Key == Key.NumPad4 || e.Key == Key.A)
+            {
+                if (is_full)
+                {
+                    if (!(full_page_index - 1 > index_page.Count) && full_page_index - 1 >= 0 && single_page_num - 1 >= 0)
+                    {
+                        single_page_num -= 2;
+                        full_page_index--;
+                        page_num.SelectedIndex = full_page_index;
+                    }
+                }
+                else
+                {
+                    if (!Convert.ToBoolean(is_full_spread.IsChecked) && single_page_num + 1 <= sort_images.Length && single_page_num + 1 > 0)
+                    {
+                        single_page_num--;
+                        full_page_index = (int)Math.Truncate((double)single_page_num / 2);
+                        page_num.SelectedIndex = single_page_num - 1;
+                    }
+                }
+            }else if(e.Key == Key.NumPad5 || e.Key == Key.S)
+            {
+                single_page_num = 1;
+                full_page_index = 0;
+                page_num.SelectedIndex = full_page_index;
+            }
+        }
+
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+            var window = Window.GetWindow(this);
+            window.KeyDown += Page_PreviewKeyDown;
+        }
+
+        private void Page_Unloaded(object sender, RoutedEventArgs e)
+        {
+            for(int i = 0; i< sort_images.Length; i++)
+            {
+                sort_images[i] = null;
+            }
         }
     }
 }

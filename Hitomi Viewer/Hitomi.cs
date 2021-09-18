@@ -35,8 +35,8 @@ namespace Hitomi_Core
             ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
             web.Encoding = Encoding.UTF8;
             gallery_info = JObject.Parse(web.DownloadString("https://ltn.hitomi.la/galleries/" + _gallery_id + ".js").Split(new string[] { "var galleryinfo = " }, StringSplitOptions.None)[1]);
-            Console.WriteLine($"https://hitomi.la/{gallery_info["type"]}/{HttpUtility.UrlEncode(gallery_info["title"].ToString().Replace(' ', '-').ToLower(new System.Globalization.CultureInfo("en-US"))) + "-" + gallery_info["language_localname"].ToString() + "-" + _gallery_id}.html");
-            gallery_html = web.DownloadString($"https://hitomi.la/{gallery_info["type"]}/{HttpUtility.UrlEncode(gallery_info["title"].ToString().Replace(' ', '-').ToLower(new System.Globalization.CultureInfo("en-US"))) + "-" + gallery_info["language_localname"].ToString() + "-" + _gallery_id}.html");
+            Console.WriteLine($"https://hitomi.la/{gallery_info["type"]}/{HttpUtility.UrlEncode(gallery_info["title"].ToString().Replace(' ', '-').ToLower(new System.Globalization.CultureInfo("en-US"))) + "-" + gallery_info["language_localname"].ToString().ToLower() + "-" + _gallery_id}.html");
+            gallery_html = web.DownloadString($"https://hitomi.la/{gallery_info["type"]}/{HttpUtility.UrlEncode(gallery_info["title"].ToString().Replace(' ', '-').ToLower(new System.Globalization.CultureInfo("en-US"))) + "-" + gallery_info["language_localname"].ToString().ToLower() + "-" + _gallery_id}.html");
             gallery_id = _gallery_id;
         }
 

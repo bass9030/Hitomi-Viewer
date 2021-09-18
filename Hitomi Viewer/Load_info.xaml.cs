@@ -115,9 +115,10 @@ namespace Hitomi_Viewer
             image.UriSource = null;
             if (ext == "webp")
             {
+                MemoryStream decodeImage = new MemoryStream();
                 SimpleDecoder dec = new SimpleDecoder();
-                dec.DecodeFromBytes(imageData, imageData.Length).Save(mem, System.Drawing.Imaging.ImageFormat.Png);
-                image.StreamSource = mem;
+                dec.DecodeFromBytes(imageData, imageData.Length).Save(decodeImage, System.Drawing.Imaging.ImageFormat.Png);
+                image.StreamSource = decodeImage;
             }
             else if (ext == "avif")
             {
@@ -183,6 +184,7 @@ namespace Hitomi_Viewer
                 }
                 bool iserr = false;
                 string errmsg = "";
+                Console.WriteLine(thumbnail_image);
                 using (WebClient wc = new WebClient())
                 {
                     wc.Headers.Add("Referer", "https://hitomi.la/reader/" + gallery_num + ".html");
@@ -198,7 +200,7 @@ namespace Hitomi_Viewer
                     {
                         try
                         {
-                            thumbnail.Source = LoadImage(Mydata, thumbnail_image.Split('.')[thumbnail_image.Split('.').Length - 1]);
+                            thumbnail.Source = LoadImage(Mydata, thumbnail_image.Split('.').Last());
                             for(int i = 1; i < images.Length + 1; i++)
                             {
                                 Load_at_page_num.Items.Add(i.ToString());
@@ -265,12 +267,16 @@ namespace Hitomi_Viewer
 
         private void Load_at_page_Unchecked(object sender, RoutedEventArgs e)
         {
-            Load_at_page_num.IsEnabled = false;
-            bookmark.Property(gallery_num).Remove();
-            Load_at_page_num.SelectedIndex = -1;
-            Console.WriteLine(bookmark);
-            Properties.Settings.Default.bookmark = bookmark.ToString();
-            Properties.Settings.Default.Save();
+            try
+            {
+                Load_at_page_num.IsEnabled = false;
+                if(bookmark.Property(gallery_num) != null) bookmark.Property(gallery_num).Remove();
+                Load_at_page_num.SelectedIndex = -1;
+                Console.WriteLine(bookmark);
+                Properties.Settings.Default.bookmark = bookmark.ToString();
+                Properties.Settings.Default.Save();
+            }
+            catch(Exception) { }
         }
 
         private void Download_Click(object sender, RoutedEventArgs e)
@@ -295,6 +301,18 @@ namespace Hitomi_Viewer
             diglog.Title = "파일 선택...";
             if (diglog.ShowDialog() == true)
             {
+                using (ZipArchive archive = ZipFile.OpenRead(diglog.FileName))
+                {
+                    foreach (ZipArchiveEntry zip in archive.Entries)
+                    { 
+                        if(new FileInfo(zip.FullName).Extension != ".png")
+                        {
+                            MessageBox.Show("파일을 불러오는중 오류가 발생했습니다.\n해당 압축 파일은 이미지 압축 모음이 아닌것 같습니다.", "", MessageBoxButton.OK, MessageBoxImage.Error);
+                            return;
+                        }
+                    }
+                }
+
                 Viewer viewer = new Viewer(new string[] { diglog.FileName }, 1, null, true);
                 NavigationService.Navigate(viewer, UriKind.Relative);
             }
