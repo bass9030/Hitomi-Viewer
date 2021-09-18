@@ -8,6 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("avifdec.exe")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("libwebp.dll")]
 
 

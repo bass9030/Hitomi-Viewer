@@ -148,13 +148,15 @@ function subdomain_from_url(url, base) {
         
         var g = parseInt(m[1], b);
         if (!isNaN(g)) {
-                if (g &lt; 0x30) {
-                        number_of_frontends = 2;
+                var o = 0;
+                if (g &lt; 0x88) {
+                        o = 1;
                 }
-                if (g &lt; 0x09) {
-                        g = 1;
+                if (g &lt; 0x44) {
+                        o = 2;
                 }
-                retval = subdomain_from_galleryid(g, number_of_frontends) + retval;
+                //retval = subdomain_from_galleryid(g, number_of_frontends) + retval;
+                retval = String.fromCharCode(97 + o) + retval;
         }
         
         return retval;
