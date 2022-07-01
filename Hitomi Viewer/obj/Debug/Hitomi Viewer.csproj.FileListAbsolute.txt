@@ -20,3 +20,43 @@ C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\bin\Debug\Imazen.WebP.dl
 C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\bin\Debug\Imazen.WebP.xml
 C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\bin\Debug\libwebp.dll
 C:\Users\bass9\source\repos\Hitomi Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer_Content.g.cs
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\libwebp.dll
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\Resources\Loading.gif
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\Hitomi Viewer.exe.config
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\Hitomi Viewer.exe
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\Hitomi Viewer.pdb
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\AdvancedStringBuilder.dll
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\cs-hitomi.dll
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\Imazen.WebP.dll
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\Microsoft.WindowsAPICodePack.dll
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\Microsoft.WindowsAPICodePack.Shell.dll
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\Newtonsoft.Json.dll
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\WpfAnimatedGif.dll
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\AdvancedStringBuilder.xml
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\Imazen.WebP.xml
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\Microsoft.WindowsAPICodePack.xml
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\Microsoft.WindowsAPICodePack.Shell.xml
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\Newtonsoft.Json.xml
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\WpfAnimatedGif.pdb
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\Debug\WpfAnimatedGif.xml
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.csproj.AssemblyReference.cache
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\MainWindow.baml
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Viewer.baml
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Download_Window.g.cs
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Load_info.g.cs
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\MainWindow.g.cs
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Viewer.g.cs
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\App.g.cs
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer_Content.g.cs
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer_MarkupCompile.cache
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer_MarkupCompile.lref
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Download_Window.baml
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Load_info.baml
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.g.resources
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Hitomi_Viewer.Properties.Resources.resources
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.csproj.GenerateResource.cache
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.csproj.CoreCompileInputs.cache
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.csproj.CopyComplete
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.exe
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.pdb
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\obj\Debug\Hitomi Viewer.csproj.SuggestedBindingRedirects.cache

@@ -53,19 +53,14 @@ C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\Hitomi 
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\Hitomi Viewer.exe
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\Hitomi Viewer.pdb
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\AdvancedStringBuilder.dll
-C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\ClearScript.Core.dll
-C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\ClearScript.V8.dll
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\Imazen.WebP.dll
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\JavaScriptEngineSwitcher.Core.dll
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\Microsoft.WindowsAPICodePack.dll
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\Microsoft.WindowsAPICodePack.Shell.dll
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\Newtonsoft.Json.dll
-C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\NSoup.dll
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\System.Runtime.InteropServices.RuntimeInformation.dll
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\WpfAnimatedGif.dll
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\AdvancedStringBuilder.xml
-C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\ClearScript.Core.xml
-C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\ClearScript.V8.xml
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\Imazen.WebP.xml
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\JavaScriptEngineSwitcher.Core.xml
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\Microsoft.WindowsAPICodePack.xml
@@ -94,3 +89,4 @@ C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\obj\x64\Debug\Hitomi 
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\obj\x64\Debug\Hitomi Viewer.csproj.CopyComplete
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\obj\x64\Debug\Hitomi Viewer.exe
 C:\Users\bass9030\Source\Repos\Hitomi-Viewer\Hitomi Viewer\obj\x64\Debug\Hitomi Viewer.pdb
+C:\Users\bass9030\source\repos\Hitomi-Viewer\Hitomi Viewer\bin\x64\Debug\cs-hitomi.dll

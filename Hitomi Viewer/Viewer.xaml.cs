@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using WpfAnimatedGif;
+using cs_hitomi;
 
 namespace Hitomi_Viewer
 {
@@ -23,11 +24,13 @@ namespace Hitomi_Viewer
     /// </summary>
     public partial class Viewer : Page
     {
-        string[] images;
+        cs_hitomi.Image[] images;
+        string[] images_local;
         BitmapImage[] sort_images;
+        utils.ImageUrlResolver UrlResolver;
         string gallery_num;
-        int startnum;//not index number! this is start at 1!
-        int single_page_num;//not index number! this is start at 1!
+        int startnum; // WARING: NOT INDEX NUMBER! it is start at 1!
+        int single_page_num; // WARING: NOT INDEX NUMBER! it is start at 1!
         int full_page_index;
         List<List<int>> index_page;
         bool is_full = true;
@@ -36,52 +39,54 @@ namespace Hitomi_Viewer
         bool is_local;
         string zipath;
 
-        public Viewer(string[] _images, int _startnum, string _gallery_num, bool _is_local = false)
+        public Viewer(cs_hitomi.Image[] _images, int _startnum, string _gallery_num)
         {
+            UrlResolver = new utils.ImageUrlResolver();
             InitializeComponent();
-            is_local = _is_local;
             Loaded += Viewer_Loaded;
-            if (!is_local)
+
+            images = _images;
+            startnum = _startnum;
+            gallery_num = _gallery_num;
+            if (_startnum != 1)
             {
-                images = _images;
-                startnum = _startnum;
-                gallery_num = _gallery_num;
-                if (_startnum != 1)
-                {
-                    single_page_num = startnum;
-                    full_page_index = (int)Math.Truncate((double)single_page_num / 2);
-                }
-                else
-                {
-                    single_page_num = startnum;
-                    full_page_index = (int)Math.Truncate((double)startnum / 2);
-                }
-                Image_loading = new BackgroundWorker();
-                Image_loading.WorkerSupportsCancellation = true;
-                Image_loading.WorkerReportsProgress = true;
-                is_first_page = (_startnum == 1);
-                is_full = Properties.Settings.Default.is_full_page;
-                Image_loading.ProgressChanged += Image_loading_ProgressChanged;
-                Image_loading.DoWork += Image_loading_DoWork;
-                Image_loading.RunWorkerCompleted += Image_loading_RunWorkerCompleted;
+                single_page_num = startnum;
+                full_page_index = (int)Math.Truncate((double)single_page_num / 2);
             }
             else
             {
-                zipath = _images[0];
-                using (ZipArchive zip = ZipFile.OpenRead(zipath))
-                {
-                    images = new string[zip.Entries.Count];
-                }
-                startnum = 1;
-                single_page_num = 1;
-                full_page_index = 0;
-                is_first_page = (startnum == 1);
-                Image_loading = new BackgroundWorker();
-                Image_loading.WorkerReportsProgress = true;
-                Image_loading.ProgressChanged += Image_loading_ProgressChanged;
-                Image_loading.RunWorkerCompleted += Image_loading_RunWorkerCompleted;
-                Image_loading.DoWork += Image_loading_DoWork;
+                single_page_num = startnum;
+                full_page_index = (int)Math.Truncate((double)startnum / 2);
             }
+            Image_loading = new BackgroundWorker();
+            Image_loading.WorkerSupportsCancellation = true;
+            Image_loading.WorkerReportsProgress = true;
+            is_first_page = (_startnum == 1);
+            is_full = Properties.Settings.Default.is_full_page;
+            Image_loading.ProgressChanged += Image_loading_ProgressChanged;
+            Image_loading.DoWork += Image_loading_DoWork;
+            Image_loading.RunWorkerCompleted += Image_loading_RunWorkerCompleted;
+        }
+
+        public Viewer(string[] _images, int _startnum, string _gallery_num)
+        {
+            InitializeComponent();
+            Loaded += Viewer_Loaded;
+
+            zipath = _images[0];
+            using (ZipArchive zip = ZipFile.OpenRead(zipath))
+            {
+                images_local = new string[zip.Entries.Count];
+            }
+            startnum = 1;
+            single_page_num = 1;
+            full_page_index = 0;
+            is_first_page = (startnum == 1);
+            Image_loading = new BackgroundWorker();
+            Image_loading.WorkerReportsProgress = true;
+            Image_loading.ProgressChanged += Image_loading_ProgressChanged;
+            Image_loading.RunWorkerCompleted += Image_loading_RunWorkerCompleted;
+            Image_loading.DoWork += Image_loading_DoWork;
         }
 
         private void Image_loading_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -316,10 +321,9 @@ namespace Hitomi_Viewer
                             {
                                 using (WebClient wc = new WebClient())
                                 {
-                                    wc.Headers.Add("Referer", $"https://hitomi.la/reader/{gallery_num}.html");
-                                    Byte[] image = wc.DownloadData(images[i]);
-                                    wc.Dispose();
-                                    sort_images[i] = LoadImage(image, images[i].Split('.').Last());
+                                    wc.Headers.Add("Referer", $"https://hitomi.la");
+                                    Byte[] image = wc.DownloadData(UrlResolver.getImageUrl(images[i], images[i].hasWebp ? "webp" : "avif"));
+                                    sort_images[i] = LoadImage(image, images[i].hasWebp ? "webp" : "avif");
                                     Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                     {
                                         if (single_page_num == 1)
@@ -393,10 +397,9 @@ namespace Hitomi_Viewer
                             {
                                 using (WebClient wc = new WebClient())
                                 {
-                                    wc.Headers.Add("Referer", $"https://hitomi.la/reader/{gallery_num}.html");
-                                    Byte[] image = wc.DownloadData(images[i]);
-                                    wc.Dispose();
-                                    sort_images[i] = LoadImage(image, images[i].Split('.').Last());
+                                    wc.Headers.Add("Referer", $"https://hitomi.la");
+                                    Byte[] image = wc.DownloadData(UrlResolver.getImageUrl(images[i], images[i].hasWebp ? "webp" : "avif"));
+                                    sort_images[i] = LoadImage(image, images[i].hasWebp ? "webp" : "avif");
                                     Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                     {
                                         if (single_page_num == 1)
@@ -469,10 +472,9 @@ namespace Hitomi_Viewer
                             {
                                 using (WebClient wc = new WebClient())
                                 {
-                                    wc.Headers.Add("Referer", $"https://hitomi.la/reader/{gallery_num}.html");
-                                    Byte[] image = wc.DownloadData(images[i]);
-                                    wc.Dispose();
-                                    sort_images[i] = LoadImage(image, images[i].Split('.').Last());
+                                    wc.Headers.Add("Referer", $"https://hitomi.la");
+                                    Byte[] image = wc.DownloadData(UrlResolver.getImageUrl(images[i], images[i].hasWebp ? "webp" : "avif"));
+                                    sort_images[i] = LoadImage(image, images[i].hasWebp ? "webp" : "avif");
                                     Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                     {
                                         if (single_page_num == 1)

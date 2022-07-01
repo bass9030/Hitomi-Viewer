@@ -9,6 +9,8 @@ using System.Windows.Threading;
 using System.Drawing.Imaging;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using cs_hitomi;
+using System.Net.Http;
 
 namespace Hitomi_Viewer
 {
@@ -19,11 +21,12 @@ namespace Hitomi_Viewer
     {
         BackgroundWorker downloader;
         string gallery_title;
-        string[] images;
+        utils.ImageUrlResolver urlResolver = new utils.ImageUrlResolver();
+        Image[] images;
         string save_path;
         string gallery_num;
 
-        public Download_Window(string _title, string[] _images, string _path, string _gallery_num)
+        public Download_Window(string _title, Image[] _images, string _path, string _gallery_num)
         {
             InitializeComponent();
             downloader = new BackgroundWorker();
@@ -57,55 +60,62 @@ namespace Hitomi_Viewer
             download_bar.Value = e.ProgressPercentage;
         }
 
-        private MemoryStream get_image(string i)
+        private MemoryStream get_image(Image i)
         {
-            string ext = i.Split('.')[i.Split('.').Length - 1];
-            WebClient wc = new WebClient();
-            wc.Headers.Add("Referer", "https://hitomi.la/reader/" + gallery_num + ".html");
-            Byte[] imageData = wc.DownloadData(i);            
-            var mem = new MemoryStream(imageData);
-            mem.Position = 0;
-            if (ext == "webp")
+            string ext = i.hasWebp ? "webp" : "avif";
+            using(HttpClient wc = new HttpClient())
             {
-                SimpleDecoder dec = new SimpleDecoder();
-                dec.DecodeFromBytes(imageData, imageData.Length).Save(mem, ImageFormat.Png);
-            }
-            else if (ext == "avif")
-            {
-                Byte[] avifdec = Properties.Resources.avifdec;
-                File.WriteAllBytes("avifdec.exe", avifdec);
-                File.WriteAllBytes("tmp.avif", imageData);
-                Process process = new Process();
-                ProcessStartInfo startInfo = new ProcessStartInfo
+                wc.DefaultRequestHeaders.Add("Referer", "https://hitomi.la");
+                HttpRequestMessage request = new(HttpMethod.Get, urlResolver.getImageUrl(i, ext));
+                using (MemoryStream mem = new MemoryStream())
                 {
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    CreateNoWindow = true,
-                    FileName = "cmd.exe",
-                    Arguments = "/C avifdec.exe tmp.avif tmp.png"
-                };
-                process.StartInfo = startInfo;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.Start();
-                process.WaitForExit();
-                string output = process.StandardOutput.ReadToEnd();
-                if (process.ExitCode == 0)
-                {
-                    mem = new MemoryStream(File.ReadAllBytes("tmp.png"));
-                }
-                else
-                {
-                    File.Delete("tmp.avif");
-                    File.Delete("tmp.png");
-                    File.Delete("avifdec.exe");
-                    throw new Exception("Failed to Load Image: The process of converting the image returned " + process.ExitCode + ".\n" + output);
-                }
-                File.Delete("tmp.avif");
-                File.Delete("tmp.png");
-                File.Delete("avifdec.exe");
-            }
+                    wc.Send(request).Content.ReadAsStream().CopyTo(mem);
+                    byte[] imageData = mem.ToArray();
+                    mem.Position = 0;
+                    if (ext == "webp")
+                    {
+                        SimpleDecoder dec = new SimpleDecoder();
+                        dec.DecodeFromBytes(imageData, imageData.Length).Save(mem, ImageFormat.Png);
+                    }
+                    else if (ext == "avif")
+                    {
+                        Byte[] avifdec = Properties.Resources.avifdec;
+                        File.WriteAllBytes("avifdec.exe", avifdec);
+                        File.WriteAllBytes("tmp.avif", imageData);
+                        Process process = new Process();
+                        ProcessStartInfo startInfo = new ProcessStartInfo
+                        {
+                            WindowStyle = ProcessWindowStyle.Hidden,
+                            CreateNoWindow = true,
+                            FileName = "cmd.exe",
+                            Arguments = "/C avifdec.exe tmp.avif tmp.png"
+                        };
+                        process.StartInfo = startInfo;
+                        process.StartInfo.UseShellExecute = false;
+                        process.StartInfo.RedirectStandardOutput = true;
+                        process.Start();
+                        process.WaitForExit();
+                        string output = process.StandardOutput.ReadToEnd();
+                        if (process.ExitCode == 0)
+                        {
+                            mem.Write(File.ReadAllBytes("tmp.png"), 0, File.ReadAllBytes("tmp.png").Length);
+                        }
+                        else
+                        {
+                            File.Delete("tmp.avif");
+                            File.Delete("tmp.png");
+                            File.Delete("avifdec.exe");
+                            throw new Exception("Failed to Load Image: The process of converting the image returned " + process.ExitCode + ".\n" + output);
+                        }
+                        File.Delete("tmp.avif");
+                        File.Delete("tmp.png");
+                        File.Delete("avifdec.exe");
+                    }
 
-            return mem;
+                    return mem;
+                }
+
+            }
         }
 
         public void ArchiveFiles(string zipFileName, MemoryStream[] archiveFileList)
@@ -149,7 +159,7 @@ namespace Hitomi_Viewer
         {
             int num = 1;
             MemoryStream[] images_with_decoding = new MemoryStream[images.Length];
-            foreach (string i in images)
+            foreach (Image i in images)
             {
                 while (true)
                 {

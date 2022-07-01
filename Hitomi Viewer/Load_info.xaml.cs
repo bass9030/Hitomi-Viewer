@@ -1,4 +1,4 @@
-﻿using Hitomi_Core;
+﻿using cs_hitomi;
 using Imazen.WebP;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
@@ -34,14 +34,16 @@ namespace Hitomi_Viewer
     public partial class Load_info : Page
     {
         BackgroundWorker get_info;
+        utils.ImageUrlResolver imgResolver;
+        Gallery gallery;
         string gallery_num;
-        Hitomi hitomi;
         JObject bookmark;
         private static readonly Regex _regex = new Regex("[^0-9]+"); //regex that matches disallowed text
 
         public Load_info()
         {
             InitializeComponent();
+            imgResolver = new utils.ImageUrlResolver();
             get_info = new BackgroundWorker();
             get_info.DoWork += Get_info_DoWork;
             try
@@ -61,38 +63,12 @@ namespace Hitomi_Viewer
             }
         }
 
-        private static bool IsTextAllowed(string text)
-        {
-            return !_regex.IsMatch(text);
-        }
-
         private void Load_at_page_num_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             bookmark[keyword.Text] = Load_at_page_num.SelectedIndex + 1;
             Properties.Settings.Default.bookmark = bookmark.ToString();
             Properties.Settings.Default.Save();
             Console.WriteLine(bookmark);
-        }
-
-        private void keyword_PreviewKeyDown(object sender, TextCompositionEventArgs e)
-        {
-            e.Handled = !IsTextAllowed(e.Text);
-        }
-
-        private void keyword_Pasting(object sender, DataObjectPastingEventArgs e)
-        {
-            if (e.DataObject.GetDataPresent(typeof(String)))
-            {
-                String text = (String)e.DataObject.GetData(typeof(String));
-                if (!IsTextAllowed(text))
-                {
-                    e.CancelCommand();
-                }
-            }
-            else
-            {
-                e.CancelCommand();
-            }
         }
 
         private void search_Click(object sender, RoutedEventArgs e)
@@ -169,70 +145,53 @@ namespace Hitomi_Viewer
         {
             try
             {
-                hitomi = new Hitomi(gallery_num);
-                string[] images = hitomi.images;
-                string thumbnail_image = images[0];
-                if (thumbnail_image == null)
+                gallery = utils.getGallery(Convert.ToInt32(gallery_num), true);
+                cs_hitomi.Image[] images = gallery.files;
+                cs_hitomi.Image thumbnail_image = images[0];
+                List<string> tags = new List<string>();
+                foreach (Tag tag in gallery.tags) tags.Add(tag.ToString());
+
+                string subtitles = "Artist: " + string.Join(", ", gallery.artists) + "(" + string.Join(", ", gallery.groups) + ")\n" +
+                    ((gallery.series.Length != 0) ? "Series: " + string.Join(", ", gallery.series) + "\n" : "") +
+                    "Type: " + gallery.type + "\n" +
+                    "Language: " + gallery.languageName + "\n" +
+                    "Tags: " + string.Join(", ", tags) + "\n" +
+                    "Upload date: " + gallery.publishedDate.ToString();
+
+                BitmapImage thumb;
+
+                using(WebClient wc = new WebClient())
                 {
-                    MessageBox.Show("썸네일 이미지를 받아오지 못했습니다.", "", MessageBoxButton.OK, MessageBoxImage.Error);
-                    Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
-                    {
-                        search.IsEnabled = true;
-                        keyword.IsEnabled = true;
-                    }));
-                    return;
+                    wc.Headers.Add("Referer", "https://hitomi.la");
+                    thumb = LoadImage(wc.DownloadData(imgResolver.getImageUrl(gallery.files[0], gallery.files[0].hasWebp ? "webp" : "avif", true)), gallery.files[0].hasWebp ? "webp" : "avif");
                 }
-                bool iserr = false;
-                string errmsg = "";
-                Console.WriteLine(thumbnail_image);
-                using (WebClient wc = new WebClient())
-                {
-                    wc.Headers.Add("Referer", "https://hitomi.la/reader/" + gallery_num + ".html");
-                    Byte[] Mydata = wc.DownloadData(thumbnail_image);
-                    string subtitles = "Artist: " + hitomi.Artist + "(" + hitomi.Group + ")\n" +
-                        "Series: " + hitomi.Series + "\n" +
-                        "Type: " + hitomi.type + "\n" +
-                        "Language: " + hitomi.language + "\n" +
-                        "Tags: " + string.Join(", ", hitomi.tags) + "\n" +
-                        "Upload date: " + hitomi.upload_date;
-                    wc.Dispose();
-                    Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
-                    {
-                        try
-                        {
-                            thumbnail.Source = LoadImage(Mydata, thumbnail_image.Split('.').Last());
-                            for(int i = 1; i < images.Length + 1; i++)
-                            {
-                                Load_at_page_num.Items.Add(i.ToString());
-                            }
-                            title.Content = hitomi.title;
-                            subtitle.Content = subtitles;
-                            View.Visibility = Visibility.Visible;
-                            Download.Visibility = Visibility.Visible;
-                            Load_at_page.Visibility = Visibility.Visible;
-                            Load_at_page_num.Visibility = Visibility.Visible;
-                            Load_at_page_num.IsEnabled = false;
-                            search.IsEnabled = true;
-                            keyword.IsEnabled = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            iserr = true;
-                            errmsg = ex.ToString();
-                        }
-                    }));
-                }
-                if (iserr)
-                    throw new Exception(errmsg);
 
                 Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                 {
+                    thumbnail.Source = thumb;
+                    for (int i = 1; i < images.Length + 1; i++)
+                    {
+                        Load_at_page_num.Items.Add(i.ToString());
+                    }
+                    title.Content = gallery.title.display;
+                    subtitle.Content = subtitles;
+                    View.Visibility = Visibility.Visible;
+                    Download.Visibility = Visibility.Visible;
+                    Load_at_page.Visibility = Visibility.Visible;
+                    Load_at_page_num.Visibility = Visibility.Visible;
+                    Load_at_page_num.IsEnabled = false;
+                    search.IsEnabled = true;
+                    keyword.IsEnabled = true;
+                }));
+
+                /*.Invoke(DispatcherPriority.Normal, new Action(delegate
+                {
                     try
                     {
-                        if (bookmark[hitomi.gallery_id] != null && bookmark.Value<int>(hitomi.gallery_id) != 0)
+                        if (bookmark[gallery.id] != null && bookmark.Value<int>(gallery.id) != 0)
                         {
                             Load_at_page.IsChecked = true;
-                            Load_at_page_num.SelectedIndex = bookmark.Value<int>(hitomi.gallery_id) - 1;
+                            Load_at_page_num.SelectedIndex = bookmark.Value<int>(gallery.id) - 1;
                         }
                     }
                     catch
@@ -240,7 +199,7 @@ namespace Hitomi_Viewer
                         bookmark.Property(gallery_num).Remove();
                         MessageBox.Show("북마크 로드 실패", "", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
-                }));
+                }));*/
             }
             catch(Exception ex)
             {
@@ -256,7 +215,7 @@ namespace Hitomi_Viewer
 
         private void View_Click(object sender, RoutedEventArgs e)
         {
-            NavigationService.Navigate(new Viewer(hitomi.images, (Convert.ToBoolean(Load_at_page.IsChecked) ? Convert.ToInt32(Load_at_page_num.SelectedItem) : 1), gallery_num), UriKind.Relative);
+            NavigationService.Navigate(new Viewer(gallery.files, (Convert.ToBoolean(Load_at_page.IsChecked) ? Convert.ToInt32(Load_at_page_num.SelectedItem) : 1), gallery_num), UriKind.Relative);
         }
 
         private void Load_at_page_Checked(object sender, RoutedEventArgs e)
@@ -286,7 +245,7 @@ namespace Hitomi_Viewer
             diglog.Description = "저장할 폴더 선택...";
             if(diglog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                Download_Window down = new Download_Window(hitomi.title, hitomi.images, diglog.SelectedPath, gallery_num);
+                Download_Window down = new Download_Window(gallery.title.display, gallery.files, diglog.SelectedPath, gallery_num);
                 down.ShowActivated = true;
                 down.Show();
             }
@@ -313,7 +272,7 @@ namespace Hitomi_Viewer
                     }
                 }
 
-                Viewer viewer = new Viewer(new string[] { diglog.FileName }, 1, null, true);
+                Viewer viewer = new Viewer(new string[] { diglog.FileName }, 1, null);
                 NavigationService.Navigate(viewer, UriKind.Relative);
             }
         }
