@@ -39,7 +39,8 @@ namespace Hitomi_Viewer
         Gallery gallery;
         string gallery_num;
         JObject bookmark;
-        private static readonly Regex _regex = new Regex("[^0-9]+"); //regex that matches disallowed text
+        private static readonly Regex numRegex = new Regex("[^0-9]+"); //regex that matches disallowed text
+        private static readonly Regex tagRegex = new Regex("(female|male|artist|group|character|language|series|tag|type):[a-z_]+"); //regex that matches disallowed text
 
         public Load_info()
         {
@@ -189,7 +190,7 @@ namespace Hitomi_Viewer
                     keyword.IsEnabled = true;
                 }));
 
-                /*.Invoke(DispatcherPriority.Normal, new Action(delegate
+                Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                 {
                     try
                     {
@@ -201,10 +202,10 @@ namespace Hitomi_Viewer
                     }
                     catch
                     {
-                        bookmark.Property(gallery_num).Remove();
+                        //bookmark.Property(gallery_num).Remove();
                         MessageBox.Show("북마크 로드 실패", "", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
-                }));*/
+                }));
             }
             catch(Exception ex)
             {
