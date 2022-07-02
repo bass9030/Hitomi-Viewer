@@ -25,6 +25,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Security.Cryptography;
+using System.Net.Http;
 
 namespace Hitomi_Viewer
 {
@@ -159,11 +160,15 @@ namespace Hitomi_Viewer
                     "Upload date: " + gallery.publishedDate.ToString();
 
                 BitmapImage thumb;
-
-                using(WebClient wc = new WebClient())
+                using(HttpClient wc = new())
                 {
-                    wc.Headers.Add("Referer", "https://hitomi.la");
-                    thumb = LoadImage(wc.DownloadData(imgResolver.getImageUrl(gallery.files[0], gallery.files[0].hasWebp ? "webp" : "avif", true)), gallery.files[0].hasWebp ? "webp" : "avif");
+                    wc.DefaultRequestHeaders.Add("Referer", "https://hitomi.la");
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, imgResolver.getImageUrl(gallery.files[0], gallery.files[0].hasWebp ? "webp" : "avif", true));
+                    using(MemoryStream ms = new MemoryStream())
+                    {
+                        wc.Send(request).Content.ReadAsStream().CopyTo(ms);
+                        thumb = LoadImage(ms.ToArray(), gallery.files[0].hasWebp ? "webp" : "avif");
+                    }
                 }
 
                 Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate

@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using WpfAnimatedGif;
 using cs_hitomi;
+using System.Net.Http;
 
 namespace Hitomi_Viewer
 {
@@ -319,10 +320,16 @@ namespace Hitomi_Viewer
                             }
                             try
                             {
-                                using (WebClient wc = new WebClient())
+                                using (HttpClient wc = new())
                                 {
-                                    wc.Headers.Add("Referer", $"https://hitomi.la");
-                                    Byte[] image = wc.DownloadData(UrlResolver.getImageUrl(images[i], images[i].hasWebp ? "webp" : "avif"));
+                                    wc.DefaultRequestHeaders.Add("Referer", $"https://hitomi.la");
+                                    HttpRequestMessage request = new(HttpMethod.Get, UrlResolver.getImageUrl(images[i], images[i].hasWebp ? "webp" : "avif"));
+                                    byte[] image;
+                                    using(MemoryStream ms = new MemoryStream())
+                                    {
+                                        wc.Send(request).Content.ReadAsStream().CopyTo(ms);
+                                        image = ms.ToArray();
+                                    }
                                     sort_images[i] = LoadImage(image, images[i].hasWebp ? "webp" : "avif");
                                     Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                     {
@@ -395,11 +402,15 @@ namespace Hitomi_Viewer
                             }
                             try
                             {
-                                using (WebClient wc = new WebClient())
+                                using (HttpClient wc = new())
                                 {
-                                    wc.Headers.Add("Referer", $"https://hitomi.la");
-                                    Byte[] image = wc.DownloadData(UrlResolver.getImageUrl(images[i], images[i].hasWebp ? "webp" : "avif"));
-                                    sort_images[i] = LoadImage(image, images[i].hasWebp ? "webp" : "avif");
+                                    wc.DefaultRequestHeaders.Add("Referer", $"https://hitomi.la");
+                                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, UrlResolver.getImageUrl(images[i], images[i].hasWebp ? "webp" : "avif"));
+                                    using(MemoryStream ms = new MemoryStream())
+                                    {
+                                        wc.Send(request).Content.ReadAsStream().CopyTo(ms);
+                                        sort_images[i] = LoadImage(ms.ToArray(), images[i].hasWebp ? "webp" : "avif");
+                                    }
                                     Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                     {
                                         if (single_page_num == 1)
@@ -470,11 +481,15 @@ namespace Hitomi_Viewer
                         }
                             try
                             {
-                                using (WebClient wc = new WebClient())
+                                using (HttpClient wc = new())
                                 {
-                                    wc.Headers.Add("Referer", $"https://hitomi.la");
-                                    Byte[] image = wc.DownloadData(UrlResolver.getImageUrl(images[i], images[i].hasWebp ? "webp" : "avif"));
-                                    sort_images[i] = LoadImage(image, images[i].hasWebp ? "webp" : "avif");
+                                    wc.DefaultRequestHeaders.Add("Referer", $"https://hitomi.la");
+                                    HttpRequestMessage request = new(HttpMethod.Get, UrlResolver.getImageUrl(images[i], images[i].hasWebp ? "webp" : "avif"));
+                                    using(MemoryStream ms = new())
+                                    {
+                                        request.Content.ReadAsStream().CopyTo(ms);
+                                        sort_images[i] = LoadImage(ms.ToArray(), images[i].hasWebp ? "webp" : "avif");
+                                    }
                                     Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                                     {
                                         if (single_page_num == 1)
