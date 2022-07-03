@@ -10,7 +10,7 @@
       Title="Viewer" Height="831">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="13*"/>
+            <RowDefinition Height="20"/>
             <RowDefinition Height="30*"/>
             <RowDefinition Height="10*"/>
             <RowDefinition Height="500*"/>

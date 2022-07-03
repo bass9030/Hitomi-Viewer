@@ -153,7 +153,7 @@ namespace Hitomi_Viewer
                 List<string> tags = new List<string>();
                 foreach (Tag tag in gallery.tags) tags.Add(tag.ToString());
 
-                string subtitles = "Artist: " + string.Join(", ", gallery.artists) + "(" + string.Join(", ", gallery.groups) + ")\n" +
+                string subtitles = "Artist: " + (gallery.artists.Length != 0 ? string.Join(", ", gallery.artists) : "N/A") + (gallery.groups.Length != 0 ? "(" + string.Join(", ", gallery.groups) + ")" : "") + "\n" +
                     ((gallery.series.Length != 0) ? "Series: " + string.Join(", ", gallery.series) + "\n" : "") +
                     "Type: " + gallery.type + "\n" +
                     "Language: " + gallery.languageName + "\n" +
