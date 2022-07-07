@@ -32,7 +32,7 @@ namespace Hitomi_Viewer
     /// </summary>
     public partial class galleryInfo : UserControl
     {
-        utils.ImageUrlResolver imgResolver = new();
+        utils.ImageUrlResolver imgResolver;
         int galleryNumber;
         JObject bookmark;
         Gallery gallery;
@@ -43,6 +43,7 @@ namespace Hitomi_Viewer
         public galleryInfo(int _galleryNumber)
         {
             galleryNumber = _galleryNumber;
+            
             /*try
             {
                 if (Properties.Settings.Default.bookmark == "")
@@ -121,11 +122,35 @@ namespace Hitomi_Viewer
             Console.WriteLine(bookmark);
         }
 
+
+        //INFO: THIS FUNCTION IS ASYNC
         private void GalleryInfo_Loaded(object sender, DoWorkEventArgs e)
         {
-            gallery = utils.getGallery(galleryNumber, true);
-            cs_hitomi.Image[] images = gallery.files;
-            cs_hitomi.Image thumbnail_image = images[0];
+            while (imgResolver == null)
+            {
+                try
+                {
+                    imgResolver = new();
+                    break;
+                }
+                catch
+                {
+                    if (MessageBox.Show("이미지 불러오기 실패!\n다시 시도하시겠습니까?", "", MessageBoxButton.YesNo, MessageBoxImage.Error) == MessageBoxResult.No)
+                    {
+                        return;
+                    }
+                }
+            }
+            while(true)
+            {
+                try
+                {
+                    gallery = utils.getGallery(galleryNumber, true);
+                    break;
+                }
+                catch { }
+            }
+            cs_hitomi.Image thumbnail_image = gallery.files[0];
             List<string> tags = new List<string>();
             foreach (Tag tag in gallery.tags) tags.Add(tag.ToString());
 
@@ -156,13 +181,17 @@ namespace Hitomi_Viewer
                 catch { }
             }
 
+            List<string> page = new List<string>();
+
+            for (int i = 1; i < gallery.files.Length + 1; i++)
+            {
+                page.Add(i.ToString());
+            }
+
             Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
             {
                 thumbnail.Source = thumb;
-                for (int i = 1; i < images.Length + 1; i++)
-                {
-                    Load_at_page_num.Items.Add(i.ToString());
-                }
+                Load_at_page_num.ItemsSource = page;
                 title.Content = gallery.title.display;
                 subtitle.Content = subtitles;
                 View.Visibility = Visibility.Visible;
@@ -170,6 +199,9 @@ namespace Hitomi_Viewer
                 Load_at_page.Visibility = Visibility.Visible;
                 Load_at_page_num.Visibility = Visibility.Visible;
                 Load_at_page_num.IsEnabled = false;
+
+                loading.Visibility = Visibility.Hidden;
+                content.Visibility = Visibility.Visible;
                 
                 /*try
                 {
@@ -185,6 +217,7 @@ namespace Hitomi_Viewer
                     MessageBox.Show("북마크 로드 실패", "", MessageBoxButton.OK, MessageBoxImage.Error);
                 }*/
             }));
+
 
             onLoaded?.Invoke(this, EventArgs.Empty);
         }

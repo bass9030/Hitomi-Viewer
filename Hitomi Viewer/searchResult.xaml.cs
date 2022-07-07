@@ -19,7 +19,6 @@ namespace Hitomi_Viewer
     {
         BackgroundWorker worker = new();
         int page = 1;
-        utils.ImageUrlResolver urlResolver = new utils.ImageUrlResolver();
         Tag[] tags;
         public EventHandler onLoaded;
 
@@ -53,9 +52,9 @@ namespace Hitomi_Viewer
                 {
                     galleryInfo infoGallery = new(id);
                     infoGallery.Width = result.ActualWidth - 20;
-                    infoGallery.Height = result.ActualHeight / 2;
+                    infoGallery.Height = 350;
                     infoGallery.onViewClick += onViewClick;
-                    result.Items.Add(infoGallery);
+                    ((StackPanel)result.Content).Children.Add(infoGallery);
                 });
 
             }
