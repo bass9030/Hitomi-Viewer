@@ -49,15 +49,18 @@ namespace Hitomi_Viewer
             foreach(int id in ids)
             {
 
-                Dispatcher.BeginInvoke(() =>
+                Dispatcher.Invoke(() =>
                 {
                     galleryInfo infoGallery = new(id);
+                    infoGallery.Width = result.ActualWidth - 20;
+                    infoGallery.Height = result.ActualHeight / 2;
                     infoGallery.onViewClick += onViewClick;
                     result.Items.Add(infoGallery);
                 });
 
-                onLoaded?.Invoke(this, EventArgs.Empty);
             }
+            onLoaded?.Invoke(this, EventArgs.Empty);
+
         }
         private void onViewClick(int page, Gallery gallery)
         {
