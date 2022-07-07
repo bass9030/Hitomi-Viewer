@@ -6,7 +6,6 @@
       xmlns:gif="http://wpfanimatedgif.codeplex.com"
       mc:Ignorable="d" d:DesignWidth="1462.99"
       Loaded="Page_Loaded"
-      Unloaded="Page_Unloaded"
       Title="Viewer" Height="831">
     <Grid>
         <Grid.RowDefinitions>

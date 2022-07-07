@@ -46,10 +46,13 @@ namespace Hitomi_Viewer
             InitializeComponent();
             Loaded += Viewer_Loaded;
 
+            Unloaded += Viewer_Unloaded;
+
             images = _images;
             startnum = _startnum;
             gallery_num = _gallery_num;
             single_page_num = startnum;
+            loading_bar.Maximum = _images.Length;
 
             if (_startnum != 1)
                 full_page_index = (int)Math.Truncate((double)single_page_num / 2);
@@ -64,6 +67,16 @@ namespace Hitomi_Viewer
             Image_loading.ProgressChanged += Image_loading_ProgressChanged;
             Image_loading.DoWork += Image_loading_DoWork;
             Image_loading.RunWorkerCompleted += Image_loading_RunWorkerCompleted;
+        }
+
+        private void Viewer_Unloaded(object sender, RoutedEventArgs e)
+        {
+            single_page.Source = null;
+            full_page_1.Source = null;
+            full_page_2.Source = null;
+            this.PreviewKeyDown -= Page_PreviewKeyDown;
+            sort_images = null;
+            GC.Collect();
         }
 
         public Viewer(string[] _images, int _startnum, string _gallery_num)
@@ -103,66 +116,7 @@ namespace Hitomi_Viewer
             loading_bar.Value = e.ProgressPercentage;
         }
 
-        private static BitmapImage LoadImage(byte[] imageData, string ext)
-        {
-            if (imageData == null || imageData.Length == 0) return null;
-            var image = new BitmapImage();
-            var mem = new MemoryStream(imageData);
-            mem.Position = 0;
-            image.BeginInit();
-            image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
-            image.CacheOption = BitmapCacheOption.OnLoad;
-            image.UriSource = null;
-            if (ext == "webp")
-            {
-                MemoryStream decodeImage = new MemoryStream();
-                SimpleDecoder dec = new SimpleDecoder();
-                dec.DecodeFromBytes(imageData, imageData.Length).Save(decodeImage, ImageFormat.Png);
-                image.StreamSource = decodeImage;
-            }
-            else if (ext == "avif")
-            {
-                Byte[] avifdec = Properties.Resources.avifdec;
-                File.WriteAllBytes("avifdec.exe", avifdec);
-                File.WriteAllBytes("tmp.avif", imageData);
-                Process process = new Process();
-                ProcessStartInfo startInfo = new ProcessStartInfo
-                {
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    CreateNoWindow = true,
-                    FileName = "cmd.exe",
-                    Arguments = "/C avifdec.exe tmp.avif tmp.png"
-                };
-                process.StartInfo = startInfo;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.Start();
-                process.WaitForExit();
-                string output = process.StandardOutput.ReadToEnd();
-                if (process.ExitCode == 0)
-                {
-                    mem = new MemoryStream(File.ReadAllBytes("tmp.png"));
-                    image.StreamSource = mem;
-                }
-                else
-                {
-                    File.Delete("tmp.avif");
-                    File.Delete("tmp.png");
-                    File.Delete("avifdec.exe");
-                    throw new Exception("Failed to Load Image: The process of converting the image returned " + process.ExitCode + ".\n" + output);
-                }
-                File.Delete("tmp.avif");
-                File.Delete("tmp.png");
-                File.Delete("avifdec.exe");
-            }
-            else
-            {
-                image.StreamSource = mem;
-            }
-            image.EndInit();
-            image.Freeze();
-            return image;
-        }
+        
 
         public static byte[] ReadToEnd(Stream stream)
         {
@@ -271,15 +225,17 @@ namespace Hitomi_Viewer
                     int i = 0;
                     foreach (ZipArchiveEntry zip in archive.Entries)
                     {
-                        while (Image_loading.CancellationPending)
+                        if (Image_loading.CancellationPending) break;
+
+                        while (!Image_loading.CancellationPending)
                         {
                             try
                             {
                                 Byte[] image = ReadToEnd(zip.Open());
-                                sort_images[i] = LoadImage(image, zip.FullName.Split('.').Last());
+                                sort_images[i] = tools.LoadImage(image, zip.FullName.Split('.').Last());
                                 loadImageOnControl(i);
                                 i++;
-                                Image_loading.ReportProgress((int)Math.Round((double)(100 * (i + 1)) / images.Length));
+                                Image_loading.ReportProgress(i+1);
                                 break;
                             }
                             catch
@@ -300,6 +256,11 @@ namespace Hitomi_Viewer
                 for (int i = (is_first_page ? 0 : index_page[(int)Math.Truncate((double)single_page_num / 2)][0]); (is_first_page ? i < images.Length : progress - 1 < images.Length); i++)
                 {
                     if (i > images.Length - 1) i = 0;
+                    if (Image_loading.CancellationPending)
+                    {
+                        e.Cancel = true;
+                        break;
+                    }
                     while (!Image_loading.CancellationPending)
                     {
                         try
@@ -308,20 +269,24 @@ namespace Hitomi_Viewer
                             {
                                 wc.DefaultRequestHeaders.Add("Referer", $"https://hitomi.la");
                                 HttpRequestMessage request = new(HttpMethod.Get, UrlResolver.getImageUrl(images[i], images[i].hasWebp ? "webp" : "avif"));
-                                byte[] image;
                                 using (MemoryStream ms = new MemoryStream())
                                 {
                                     wc.Send(request).Content.ReadAsStream().CopyTo(ms);
-                                    sort_images[i] = LoadImage(ms.ToArray(), images[i].hasWebp ? "webp" : "avif");
+                                    sort_images[i] = tools.LoadImage(ms.ToArray(), images[i].hasWebp ? "webp" : "avif");
                                 }
                                 loadImageOnControl(i);
-                                Image_loading.ReportProgress((int)Math.Round((double)(100 * progress) / images.Length));
+                                Image_loading.ReportProgress(i+1);
                                 progress++;
                                 break;
                             }
                         }
                         catch (Exception ex)
                         {
+                            if (Image_loading.CancellationPending)
+                            {
+                                e.Cancel = true;
+                                break;
+                            }
                             if (MessageBox.Show((i + 1).ToString() + "번째 이미지 로드 실패.\n다시 시도하시겠습니까?\n\n" + ex.ToString(), "", MessageBoxButton.YesNo, MessageBoxImage.Error) == MessageBoxResult.Yes)
                                 continue;
                             else
@@ -463,8 +428,6 @@ namespace Hitomi_Viewer
             {
                 page_num.Items.Add(i.ToString());
             }
-            /*if (sort_images.Count != images.Length)
-                return;*/
             if (single_page_num <= 0)
                 single_page_num = 1;
             page_num.SelectedIndex = single_page_num - 1;
@@ -583,8 +546,11 @@ namespace Hitomi_Viewer
 
         private void goto_search_Click(object sender, RoutedEventArgs e)
         {
-            Image_loading.Dispose();
-            NavigationService.Navigate(new Load_info(), UriKind.Relative);
+            Image_loading.CancelAsync();
+            //Image_loading.Dispose();
+            //sort_images = null;
+            NavigationService.GoBack();
+            //NavigationService.Navigate(new Load_info(), UriKind.Relative);
         }
 
         private void Page_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -642,14 +608,6 @@ namespace Hitomi_Viewer
         {
             var window = Window.GetWindow(this);
             window.KeyDown += Page_PreviewKeyDown;
-        }
-
-        private void Page_Unloaded(object sender, RoutedEventArgs e)
-        {
-            for(int i = 0; i< sort_images.Length; i++)
-            {
-                sort_images[i] = null;
-            }
         }
     }
 }

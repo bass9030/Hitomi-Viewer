@@ -34,43 +34,17 @@ namespace Hitomi_Viewer
     /// </summary>
     public partial class Load_info : Page
     {
-        BackgroundWorker get_info;
-        utils.ImageUrlResolver imgResolver;
-        Gallery gallery;
+        BackgroundWorker get_info_by_id;
         string gallery_num;
-        JObject bookmark;
-        private static readonly Regex numRegex = new Regex("[^0-9]+"); //regex that matches disallowed text
-        private static readonly Regex tagRegex = new Regex("(female|male|artist|group|character|language|series|tag|type):[a-z_]+"); //regex that matches disallowed text
+        private static readonly Regex numRegex = new Regex("^[0-9]+$"); //regex that matches disallowed text
+        private static readonly Regex tagRegex = new Regex("^((female|male|artist|group|character|language|series|tag|type):[a-z_-]+( ){0,})+$"); //regex that matches disallowed text
 
         public Load_info()
         {
             InitializeComponent();
-            imgResolver = new utils.ImageUrlResolver();
-            get_info = new BackgroundWorker();
-            get_info.DoWork += Get_info_DoWork;
-            try
-            {
-                if (Properties.Settings.Default.bookmark == "")
-                {
-                    bookmark = new JObject();
-                }
-                else
-                {
-                    bookmark = JObject.Parse(Properties.Settings.Default.bookmark);
-                }
-            }
-            catch(Exception ex)
-            {
-                MessageBox.Show("저장된 설정값을 불러올 수 없습니다.\n이전에 설정한 값들이 초기화되거나 이전으로 돌아갈 수 있습니다.\n\n" + ex.ToString(), "", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void Load_at_page_num_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            bookmark[keyword.Text] = Load_at_page_num.SelectedIndex + 1;
-            Properties.Settings.Default.bookmark = bookmark.ToString();
-            Properties.Settings.Default.Save();
-            Console.WriteLine(bookmark);
+            get_info_by_id = new BackgroundWorker();
+            get_info_by_id.DoWork += Get_info_by_id_DoWork;
+            
         }
 
         private void search_Click(object sender, RoutedEventArgs e)
@@ -78,134 +52,62 @@ namespace Hitomi_Viewer
             gallery_num = keyword.Text;
             search.IsEnabled = false;
             keyword.IsEnabled = false;
-            get_info.RunWorkerAsync();
+            get_info_by_id.RunWorkerAsync();
         }
 
-        private static BitmapImage LoadImage(byte[] imageData, string ext)
-        {
-            if (imageData == null || imageData.Length == 0) return null;
-            var image = new BitmapImage();
-            var mem = new MemoryStream(imageData);
-            mem.Position = 0;
-            image.BeginInit();
-            image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
-            image.CacheOption = BitmapCacheOption.OnLoad;
-            image.UriSource = null;
-            if (ext == "webp")
-            {
-                MemoryStream decodeImage = new MemoryStream();
-                SimpleDecoder dec = new SimpleDecoder();
-                dec.DecodeFromBytes(imageData, imageData.Length).Save(decodeImage, System.Drawing.Imaging.ImageFormat.Png);
-                image.StreamSource = decodeImage;
-            }
-            else if (ext == "avif")
-            {
-                Byte[] avifdec = Properties.Resources.avifdec;
-                File.WriteAllBytes("avifdec.exe", avifdec);
-                File.WriteAllBytes("tmp.avif", imageData);
-                Process process = new Process();
-                ProcessStartInfo startInfo = new ProcessStartInfo
-                {
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    CreateNoWindow = true,
-                    FileName = "cmd.exe",
-                    Arguments = "/C avifdec.exe tmp.avif tmp.png"
-                };
-                process.StartInfo = startInfo;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.Start();
-                process.WaitForExit();
-                string output = process.StandardOutput.ReadToEnd();
-                if (process.ExitCode == 0)
-                {
-                    mem = new MemoryStream(File.ReadAllBytes("tmp.png"));
-                    image.StreamSource = mem;
-                }
-                else
-                {
-                    File.Delete("tmp.avif");
-                    File.Delete("tmp.png");
-                    File.Delete("avifdec.exe");
-                    throw new Exception("Failed to Load Image: The process of converting the image returned " + process.ExitCode + ".\n" + output);
-                }
-                File.Delete("tmp.avif");
-                File.Delete("tmp.png");
-                File.Delete("avifdec.exe");
-            }
-            else
-            {
-                image.StreamSource = mem;
-            }
-            image.EndInit();
-            image.Freeze();
-            return image;
-        }
-
-
-        private void Get_info_DoWork(object sender, DoWorkEventArgs e)
+       
+        private void Get_info_by_id_DoWork(object sender, DoWorkEventArgs e)
         {
             try
             {
-                gallery = utils.getGallery(Convert.ToInt32(gallery_num), true);
-                cs_hitomi.Image[] images = gallery.files;
-                cs_hitomi.Image thumbnail_image = images[0];
-                List<string> tags = new List<string>();
-                foreach (Tag tag in gallery.tags) tags.Add(tag.ToString());
-
-                string subtitles = "Artist: " + (gallery.artists.Length != 0 ? string.Join(", ", gallery.artists) : "N/A") + (gallery.groups.Length != 0 ? "(" + string.Join(", ", gallery.groups) + ")" : "") + "\n" +
-                    ((gallery.series.Length != 0) ? "Series: " + string.Join(", ", gallery.series) + "\n" : "") +
-                    "Type: " + gallery.type + "\n" +
-                    "Language: " + gallery.languageName + "\n" +
-                    "Tags: " + string.Join(", ", tags) + "\n" +
-                    "Upload date: " + gallery.publishedDate.ToString();
-
-                BitmapImage thumb;
-                using(HttpClient wc = new())
+                if (numRegex.IsMatch(gallery_num))
                 {
-                    wc.DefaultRequestHeaders.Add("Referer", "https://hitomi.la");
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, imgResolver.getImageUrl(gallery.files[0], gallery.files[0].hasWebp ? "webp" : "avif", true));
-                    using(MemoryStream ms = new MemoryStream())
+                    Dispatcher.Invoke(DispatcherPriority.Normal, () =>
                     {
-                        wc.Send(request).Content.ReadAsStream().CopyTo(ms);
-                        thumb = LoadImage(ms.ToArray(), gallery.files[0].hasWebp ? "webp" : "avif");
-                    }
-                }
-
-                Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
-                {
-                    thumbnail.Source = thumb;
-                    for (int i = 1; i < images.Length + 1; i++)
-                    {
-                        Load_at_page_num.Items.Add(i.ToString());
-                    }
-                    title.Content = gallery.title.display;
-                    subtitle.Content = subtitles;
-                    View.Visibility = Visibility.Visible;
-                    Download.Visibility = Visibility.Visible;
-                    Load_at_page.Visibility = Visibility.Visible;
-                    Load_at_page_num.Visibility = Visibility.Visible;
-                    Load_at_page_num.IsEnabled = false;
-                    search.IsEnabled = true;
-                    keyword.IsEnabled = true;
-                }));
-
-                Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
-                {
-                    try
-                    {
-                        if (bookmark[gallery.id] != null && bookmark.Value<int>(gallery.id) != 0)
+                        Console.WriteLine("number match");
+                        galleryInfo info = new galleryInfo(int.Parse(keyword.Text));
+                        info.onViewClick += onViewClick;
+                        loadResult.Children.Clear();
+                        loadResult.Children.Add(info);
+                        info.onLoaded += (sender, e) =>
                         {
-                            Load_at_page.IsChecked = true;
-                            Load_at_page_num.SelectedIndex = bookmark.Value<int>(gallery.id) - 1;
-                        }
-                    }
-                    catch
+                            Dispatcher.Invoke(() =>
+                            {
+                                search.IsEnabled = true;
+                                keyword.IsEnabled = true;
+                            });
+                        };
+                    });
+
+                }
+                else if (tagRegex.IsMatch(gallery_num))
+                {
+                    Console.WriteLine("tag match");
+                    Dispatcher.Invoke(DispatcherPriority.Normal, () =>
                     {
-                        //bookmark.Property(gallery_num).Remove();
-                        MessageBox.Show("북마크 로드 실패", "", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }));
+                        searchResult info = new(utils.ParseTags(keyword.Text));
+                        //info.onViewClick += onViewClick;
+                        loadResult.Children.Clear();
+                        loadResult.Children.Add(info);
+                        info.onLoaded += (sender, e) =>
+                        {
+                            Dispatcher.Invoke(() =>
+                            {
+                                search.IsEnabled = true;
+                                keyword.IsEnabled = true;
+                            });
+                        };
+                    });
+                }
+                else
+                {
+                    MessageBox.Show("검색은 작품 번호 또는 태그로만 검색해주세요", "", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
+                    {
+                        search.IsEnabled = true;
+                        keyword.IsEnabled = true;
+                    }));
+                }
             }
             catch(Exception ex)
             {
@@ -219,42 +121,9 @@ namespace Hitomi_Viewer
             }
         }
 
-        private void View_Click(object sender, RoutedEventArgs e)
+        private void onViewClick(int page, Gallery gallery)
         {
-            NavigationService.Navigate(new Viewer(gallery.files, (Convert.ToBoolean(Load_at_page.IsChecked) ? Convert.ToInt32(Load_at_page_num.SelectedItem) : 1), gallery_num), UriKind.Relative);
-        }
-
-        private void Load_at_page_Checked(object sender, RoutedEventArgs e)
-        {
-            Load_at_page_num.IsEnabled = true;
-            Console.WriteLine(bookmark);
-        }
-
-        private void Load_at_page_Unchecked(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                Load_at_page_num.IsEnabled = false;
-                if(bookmark.Property(gallery_num) != null) bookmark.Property(gallery_num).Remove();
-                Load_at_page_num.SelectedIndex = -1;
-                Console.WriteLine(bookmark);
-                Properties.Settings.Default.bookmark = bookmark.ToString();
-                Properties.Settings.Default.Save();
-            }
-            catch(Exception) { }
-        }
-
-        private void Download_Click(object sender, RoutedEventArgs e)
-        {
-            System.Windows.Forms.FolderBrowserDialog diglog = new System.Windows.Forms.FolderBrowserDialog();
-            diglog.RootFolder = Environment.SpecialFolder.Desktop;
-            diglog.Description = "저장할 폴더 선택...";
-            if(diglog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                Download_Window down = new Download_Window(gallery.title.display, gallery.files, diglog.SelectedPath, gallery_num);
-                down.ShowActivated = true;
-                down.Show();
-            }
+            NavigationService.Navigate(new Viewer(gallery.files, page, gallery_num), UriKind.Relative);
         }
 
         private void Load_at_file_Click(object sender, RoutedEventArgs e)
@@ -291,6 +160,11 @@ namespace Hitomi_Viewer
             Properties.Settings.Default.bookmark = "";
             Properties.Settings.Default.Save();
             MessageBox.Show("완료되었습니다.", "", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void keyword_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) search_Click(sender, null);
         }
     }
 }

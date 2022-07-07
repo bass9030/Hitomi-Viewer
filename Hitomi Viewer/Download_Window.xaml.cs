@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using cs_hitomi;
 using System.Net.Http;
+using System.Collections.Generic;
 
 namespace Hitomi_Viewer
 {
@@ -29,8 +30,10 @@ namespace Hitomi_Viewer
         public Download_Window(string _title, Image[] _images, string _path, string _gallery_num)
         {
             InitializeComponent();
+            download_bar.Maximum = _images.Length;
             downloader = new BackgroundWorker();
             downloader.WorkerReportsProgress = true;
+            downloader.WorkerSupportsCancellation = true;
             downloader.DoWork += Downloader_DoWork;
             downloader.ProgressChanged += Downloader_ProgressChanged;
             downloader.RunWorkerCompleted += Downloader_RunWorkerCompleted;
@@ -40,6 +43,12 @@ namespace Hitomi_Viewer
             save_path = _path;
             gallery_num = _gallery_num;
             Loaded += Download_Window_Loaded;
+            Closed += Download_Window_Closed;
+        }
+
+        private void Download_Window_Closed(object sender, EventArgs e)
+        {
+            downloader.CancelAsync();
         }
 
         private void Downloader_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -50,7 +59,7 @@ namespace Hitomi_Viewer
 
         private void Download_Window_Loaded(object sender, RoutedEventArgs e)
         {
-            title.Content = "Downloading " + gallery_title + "...";
+            title.Content = $"{gallery_title}({gallery_num}) 다운로드중...";
             status.Text = "0/" + images.Length;
             downloader.RunWorkerAsync();
         }
@@ -60,7 +69,7 @@ namespace Hitomi_Viewer
             download_bar.Value = e.ProgressPercentage;
         }
 
-        private MemoryStream get_image(Image i)
+        private byte[] get_image(Image i)
         {
             string ext = i.hasWebp ? "webp" : "avif";
             using(HttpClient wc = new HttpClient())
@@ -72,53 +81,17 @@ namespace Hitomi_Viewer
                     wc.Send(request).Content.ReadAsStream().CopyTo(mem);
                     byte[] imageData = mem.ToArray();
                     mem.Position = 0;
-                    if (ext == "webp")
+                    Stream decodedImage = tools.LoadImage(imageData, ext).StreamSource;
+                    using (BinaryReader br = new(decodedImage))
                     {
-                        SimpleDecoder dec = new SimpleDecoder();
-                        dec.DecodeFromBytes(imageData, imageData.Length).Save(mem, ImageFormat.Png);
+                        return br.ReadBytes((int)decodedImage.Length);
                     }
-                    else if (ext == "avif")
-                    {
-                        Byte[] avifdec = Properties.Resources.avifdec;
-                        File.WriteAllBytes("avifdec.exe", avifdec);
-                        File.WriteAllBytes("tmp.avif", imageData);
-                        Process process = new Process();
-                        ProcessStartInfo startInfo = new ProcessStartInfo
-                        {
-                            WindowStyle = ProcessWindowStyle.Hidden,
-                            CreateNoWindow = true,
-                            FileName = "cmd.exe",
-                            Arguments = "/C avifdec.exe tmp.avif tmp.png"
-                        };
-                        process.StartInfo = startInfo;
-                        process.StartInfo.UseShellExecute = false;
-                        process.StartInfo.RedirectStandardOutput = true;
-                        process.Start();
-                        process.WaitForExit();
-                        string output = process.StandardOutput.ReadToEnd();
-                        if (process.ExitCode == 0)
-                        {
-                            mem.Write(File.ReadAllBytes("tmp.png"), 0, File.ReadAllBytes("tmp.png").Length);
-                        }
-                        else
-                        {
-                            File.Delete("tmp.avif");
-                            File.Delete("tmp.png");
-                            File.Delete("avifdec.exe");
-                            throw new Exception("Failed to Load Image: The process of converting the image returned " + process.ExitCode + ".\n" + output);
-                        }
-                        File.Delete("tmp.avif");
-                        File.Delete("tmp.png");
-                        File.Delete("avifdec.exe");
-                    }
-
-                    return mem;
                 }
 
             }
         }
 
-        public void ArchiveFiles(string zipFileName, MemoryStream[] archiveFileList)
+        public void ArchiveFiles(string zipFileName, List<byte[]> archiveFileList)
         {
             using (var ms = new MemoryStream())
             {
@@ -133,15 +106,17 @@ namespace Hitomi_Viewer
                         var zipEntity = archive.CreateEntry((i + 1) + ".png");
 
                         using (var entryStream = zipEntity.Open())
-                        using (var readStream = archiveFileList[i])
                         {
-                            readStream.CopyTo(entryStream);
+                            entryStream.Write(archiveFileList[i], 0, archiveFileList[i].Length);
+
                         }
                         Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                         {
-                            status.Text = "Compressing... " + (i + 1) + "/" + images.Length;
+                            title.Content = $"{gallery_title}({gallery_num}) 압축중...";
+
+                            status.Text = (i + 1) + "/" + images.Length;
                         }));
-                        downloader.ReportProgress((int)Math.Round((double)(100 * (i + 1)) / images.Length));
+                        downloader.ReportProgress(i+1);
                         i++;
                     }
                 }
@@ -158,19 +133,20 @@ namespace Hitomi_Viewer
         private void Downloader_DoWork(object sender, DoWorkEventArgs e)
         {
             int num = 1;
-            MemoryStream[] images_with_decoding = new MemoryStream[images.Length];
+            List<byte[]> images_with_decoding = new();
             foreach (Image i in images)
             {
+                if (downloader.CancellationPending) return;
                 while (true)
                 {
                     try
                     {
-                        images_with_decoding[num - 1] = get_image(i);
+                        images_with_decoding.Add(get_image(i));
                         Dispatcher.Invoke(DispatcherPriority.Normal, new Action(delegate
                         {
-                            status.Text = "Downloading... " + num + "/" + images.Length;
+                            status.Text = num + "/" + images.Length;
                         }));
-                        downloader.ReportProgress((int)Math.Round((double)(100 * num) / images.Length));
+                        downloader.ReportProgress(num);
                         num++;
                         break;
                     }
@@ -182,13 +158,13 @@ namespace Hitomi_Viewer
                         }
                         else
                         {
-                            images_with_decoding[num - 1] = null;
+                            images_with_decoding.Add(null);
                             break;
                         }
                     }
                 }
             }
-            ArchiveFiles(save_path + "\\" + Regex.Replace(gallery_title, "[\\\\/:*?\"<>|]", "_") + "(" + gallery_num + ").zip", images_with_decoding);
+            ArchiveFiles(save_path, images_with_decoding);
         }
     }
 }
