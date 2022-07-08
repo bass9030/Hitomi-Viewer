@@ -14,11 +14,11 @@
             </StackPanel>
             <StackPanel x:Name="artistPanel">
                 <Label Content="작가" FontSize="20" FontWeight="Bold" Name="artistLabel"/>
-                <Label Content="ichiri" x:Name="artist" Margin="2 0 0 0"/>
+                <TextBlock TextWrapping="WrapWithOverflow" Text="ichiri" x:Name="artist" Margin="2 0 0 0"/>
             </StackPanel>
             <StackPanel x:Name="seriesPanel">
                 <Label Content="원작" FontSize="20" FontWeight="Bold" Name="seriesLabel"/>
-                <Label Content="N/A" x:Name="series" Margin="2 0 0 0"/>
+                <TextBlock TextWrapping="WrapWithOverflow" Text="N/A" x:Name="series" Margin="2 0 0 0"/>
             </StackPanel>
             <StackPanel x:Name="languagePanel">
                 <Label Content="언어" FontSize="20" FontWeight="Bold" Name="languageLabel"/>
@@ -26,7 +26,7 @@
             </StackPanel>
             <StackPanel x:Name="tagPanel">
                 <Label Content="태그" FontSize="20" FontWeight="Bold" Name="tagLabel"/>
-                <WrapPanel Orientation="Horizontal" x:Name="tag" Margin="5 0 0 0" Height="25" ></WrapPanel>
+                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Stretch" x:Name="tag" Margin="5 0 0 0" Height="25"></WrapPanel>
             </StackPanel>
             <StackPanel x:Name="publishedDatePanel">
                 <Label Content="업로드 날짜" FontSize="20" FontWeight="Bold" Name="publicLabel"/>

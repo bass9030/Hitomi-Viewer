@@ -125,6 +125,7 @@ namespace Hitomi_Viewer
 
 
         //INFO: THIS FUNCTION IS ASYNC
+        //      NOT LOADED EVENT FUNCTION
         private void GalleryInfo_Loaded(object sender, DoWorkEventArgs e)
         {
             while (imgResolver == null)

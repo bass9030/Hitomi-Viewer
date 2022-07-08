@@ -16,6 +16,7 @@ using System.Windows.Shapes;
 
 namespace Hitomi_Viewer
 {
+
     /// <summary>
     /// galleryDetails.xaml에 대한 상호 작용 논리
     /// </summary>
@@ -53,10 +54,10 @@ namespace Hitomi_Viewer
             }
 
 
-            artist.Content = (artists.Length != 0 ? string.Join(", ", artists) + (groups.Length != 0 ? $"({string.Join(", ", groups)})" : "") : "N/A");
+            artist.Text = (artists.Length != 0 ? string.Join(", ", artists) + (groups.Length != 0 ? $"({string.Join(", ", groups)})" : "") : "N/A");
 
-            if (serieses.Length != 0)
-                series.Content = string.Join(", ", serieses);
+            if (serieses.Length != 0 && !serieses.Contains("original"))
+                series.Text = string.Join(", ", serieses);
             else
                 seriesPanel.Visibility = Visibility.Collapsed;
 
