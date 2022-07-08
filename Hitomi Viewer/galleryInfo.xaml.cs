@@ -38,12 +38,13 @@ namespace Hitomi_Viewer
         Gallery gallery;
         public onViewClickHandler onViewClick;
         public EventHandler onLoaded;
+        bool isShort = false;
         BackgroundWorker worker = new();
 
-        public galleryInfo(int _galleryNumber)
+        public galleryInfo(int _galleryNumber, bool isShort = false)
         {
             galleryNumber = _galleryNumber;
-            
+            this.isShort = isShort;
             /*try
             {
                 if (Properties.Settings.Default.bookmark == "")
@@ -135,10 +136,10 @@ namespace Hitomi_Viewer
                 }
                 catch
                 {
-                    if (MessageBox.Show("이미지 불러오기 실패!\n다시 시도하시겠습니까?", "", MessageBoxButton.YesNo, MessageBoxImage.Error) == MessageBoxResult.No)
+                    /*if (MessageBox.Show("이미지 불러오기 실패!\n다시 시도하시겠습니까?", "", MessageBoxButton.YesNo, MessageBoxImage.Error) == MessageBoxResult.No)
                     {
                         return;
-                    }
+                    }*/
                 }
             }
             while(true)
@@ -154,12 +155,12 @@ namespace Hitomi_Viewer
             List<string> tags = new List<string>();
             foreach (Tag tag in gallery.tags) tags.Add(tag.ToString());
 
-            string subtitles = "Artist: " + (gallery.artists.Length != 0 ? string.Join(", ", gallery.artists) : "N/A") + (gallery.groups.Length != 0 ? "(" + string.Join(", ", gallery.groups) + ")" : "") + "\n" +
+            /*string subtitles = "Artist: " + (gallery.artists.Length != 0 ? string.Join(", ", gallery.artists) : "N/A") + (gallery.groups.Length != 0 ? "(" + string.Join(", ", gallery.groups) + ")" : "") + "\n" +
                 ((gallery.series.Length != 0) ? "Series: " + string.Join(", ", gallery.series) + "\n" : "") +
                 "Type: " + gallery.type + "\n" +
                 "Language: " + gallery.languageName + "\n" +
                 "Tags: " + string.Join(", ", tags) + "\n" +
-                "Upload date: " + gallery.publishedDate.ToString();
+                "Upload date: " + gallery.publishedDate.ToString();*/
 
             BitmapImage thumb;
             while(true)
@@ -178,7 +179,7 @@ namespace Hitomi_Viewer
                         }
                     }
                 }
-                catch { }
+                catch(Exception ex) { Console.WriteLine(ex); }
             }
 
             List<string> page = new List<string>();
@@ -192,8 +193,17 @@ namespace Hitomi_Viewer
             {
                 thumbnail.Source = thumb;
                 Load_at_page_num.ItemsSource = page;
-                title.Content = gallery.title.display;
-                subtitle.Content = subtitles;
+                title.Text = gallery.title.display;
+                info.Children.Add(
+                    new galleryDetails(gallery.artists, 
+                    gallery.groups, 
+                    gallery.series, 
+                    gallery.type.ToString(), 
+                    gallery.languageName.ToString(), 
+                    gallery.tags, 
+                    gallery.publishedDate,
+                    isShort
+                ));
                 View.Visibility = Visibility.Visible;
                 Download.Visibility = Visibility.Visible;
                 Load_at_page.Visibility = Visibility.Visible;

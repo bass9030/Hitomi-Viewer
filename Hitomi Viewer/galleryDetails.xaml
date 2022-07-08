@@ -1,0 +1,37 @@
+﻿<UserControl x:Class="Hitomi_Viewer.galleryDetails"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Hitomi_Viewer"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <StackPanel x:Name="long" Visibility="Visible">
+            <StackPanel x:Name="typePanel">
+                <Label Content="종류" FontSize="20" FontWeight="Bold" Name="typeLabel"/>
+                <Label Content="manga" x:Name="type" Margin="2 0 0 0"/>
+            </StackPanel>
+            <StackPanel x:Name="artistPanel">
+                <Label Content="작가" FontSize="20" FontWeight="Bold" Name="artistLabel"/>
+                <Label Content="ichiri" x:Name="artist" Margin="2 0 0 0"/>
+            </StackPanel>
+            <StackPanel x:Name="seriesPanel">
+                <Label Content="원작" FontSize="20" FontWeight="Bold" Name="seriesLabel"/>
+                <Label Content="N/A" x:Name="series" Margin="2 0 0 0"/>
+            </StackPanel>
+            <StackPanel x:Name="languagePanel">
+                <Label Content="언어" FontSize="20" FontWeight="Bold" Name="languageLabel"/>
+                <Label Content="한국어" x:Name="language" Margin="2 0 0 0"/>
+            </StackPanel>
+            <StackPanel x:Name="tagPanel">
+                <Label Content="태그" FontSize="20" FontWeight="Bold" Name="tagLabel"/>
+                <WrapPanel Orientation="Horizontal" x:Name="tag" Margin="5 0 0 0" Height="25" ></WrapPanel>
+            </StackPanel>
+            <StackPanel x:Name="publishedDatePanel">
+                <Label Content="업로드 날짜" FontSize="20" FontWeight="Bold" Name="publicLabel"/>
+                <Label Content="3315년 11월 12일" x:Name="publishedDate" Margin="2 0 0 0"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

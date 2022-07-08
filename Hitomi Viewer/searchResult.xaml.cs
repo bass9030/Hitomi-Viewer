@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using System.Windows.Media;
 using System.Windows.Navigation;
 
 namespace Hitomi_Viewer
@@ -18,25 +19,25 @@ namespace Hitomi_Viewer
     public partial class searchResult : UserControl
     {
         BackgroundWorker worker = new();
-        int page = 0;
+        int page = 1;
         Tag[] tags;
         public EventHandler onLoaded;
+        bool isEventRegistered = false;
 
 
         public searchResult(Tag[] _tags)
         {
             tags = _tags;
             InitializeComponent();
-            result.ScrollChanged += Result_ScrollChanged;
             worker.DoWork += Worker_DoWork;
+            worker.RunWorkerAsync();
         }
 
         private void Result_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
             var scrollViewer = (ScrollViewer)sender;
-            if (scrollViewer.VerticalOffset + 50 == scrollViewer.ScrollableHeight)
+            if (scrollViewer.VerticalOffset + 100 >= scrollViewer.ScrollableHeight)
             {
-                Console.WriteLine("scroll end");
                 page++;
                 if(!worker.IsBusy) worker.RunWorkerAsync();
             }
@@ -65,13 +66,28 @@ namespace Hitomi_Viewer
 
                 Dispatcher.Invoke(() =>
                 {
-                    galleryInfo infoGallery = new(id);
-                    infoGallery.Width = result.ActualWidth - 20;
+                    galleryInfo infoGallery = new(id, true);
                     infoGallery.Height = 350;
+                    Thickness margin = new()
+                    {
+                        Left = 0,
+                        Right = 0,
+                    };
+                    infoGallery.Margin = margin;
                     infoGallery.onViewClick += onViewClick;
+
+                    Border hr = new Border();
+                    hr.Height = 1;
+                    hr.Background = Brushes.Gray;
                     ((StackPanel)result.Content).Children.Add(infoGallery);
+                    ((StackPanel)result.Content).Children.Add(hr);
                 });
 
+            }
+            if (!isEventRegistered)
+            {
+                result.ScrollChanged += Result_ScrollChanged;
+                isEventRegistered = true;
             }
             onLoaded?.Invoke(this, EventArgs.Empty);
 
