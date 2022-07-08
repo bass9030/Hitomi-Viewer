@@ -18,7 +18,7 @@ namespace Hitomi_Viewer
     public partial class searchResult : UserControl
     {
         BackgroundWorker worker = new();
-        int page = 1;
+        int page = 0;
         Tag[] tags;
         public EventHandler onLoaded;
 
@@ -27,13 +27,19 @@ namespace Hitomi_Viewer
         {
             tags = _tags;
             InitializeComponent();
+            result.ScrollChanged += Result_ScrollChanged;
             worker.DoWork += Worker_DoWork;
-            Loaded += SearchResult_Loaded;
         }
 
-        private void SearchResult_Loaded(object sender, System.Windows.RoutedEventArgs e)
+        private void Result_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            worker.RunWorkerAsync();
+            var scrollViewer = (ScrollViewer)sender;
+            if (scrollViewer.VerticalOffset + 50 == scrollViewer.ScrollableHeight)
+            {
+                Console.WriteLine("scroll end");
+                page++;
+                if(!worker.IsBusy) worker.RunWorkerAsync();
+            }
         }
 
         private void Worker_DoWork(object sender, DoWorkEventArgs e)
@@ -44,7 +50,16 @@ namespace Hitomi_Viewer
                 endIndex = (page - 1) * 25 + 24,
                 tags = tags
             };
-            int[] ids = utils.getIds(option);
+            int[] ids;
+            while(true)
+            {
+                try
+                {
+                    ids = utils.getIds(option);
+                    break;
+                }
+                catch { }
+            }
             foreach(int id in ids)
             {
 
