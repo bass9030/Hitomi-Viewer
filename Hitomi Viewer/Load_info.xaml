@@ -30,7 +30,7 @@
                 <ColumnDefinition Width="1*"/>
             </Grid.ColumnDefinitions>
             <Button x:Name="search" Content="검색" VerticalAlignment="Center" Margin="10 5 10 5"  Height="22" Grid.Column="1" Click="search_Click"/>
-            <TextBox x:Name="keyword" Text="" VerticalAlignment="Center" Height="22" Margin="10 5 10 5" PreviewKeyDown="keyword_PreviewKeyDown">
+            <TextBox x:Name="keyword" Text="" VerticalContentAlignment="Center"  VerticalAlignment="Center" Height="22" Margin="10 5 10 5" PreviewKeyDown="keyword_PreviewKeyDown">
                 <TextBox.Style>
                     <Style TargetType="TextBox" xmlns:sys="clr-namespace:System;assembly=mscorlib">
                         <Style.Resources>
