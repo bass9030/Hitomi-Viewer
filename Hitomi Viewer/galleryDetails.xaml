@@ -1,4 +1,5 @@
 ﻿<UserControl x:Class="Hitomi_Viewer.galleryDetails"
+             x:Name="asdf"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -6,32 +7,46 @@
              xmlns:local="clr-namespace:Hitomi_Viewer"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <local:MultiWidthConverter x:Key="multiWidthConverter"></local:MultiWidthConverter>
+    </UserControl.Resources>
+
     <Grid>
-        <StackPanel x:Name="long" Visibility="Visible">
-            <StackPanel x:Name="typePanel">
-                <Label Content="종류" FontSize="20" FontWeight="Bold" Name="typeLabel"/>
-                <Label Content="manga" x:Name="type" Margin="2 0 0 0"/>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0 0 0 0">
+            <StackPanel x:Name="long">
+                <StackPanel x:Name="typePanel">
+                    <Label Content="종류" FontSize="20" FontWeight="Bold" Name="typeLabel"/>
+                    <Label Content="manga" x:Name="type" Margin="2 0 0 0"/>
+                </StackPanel>
+                <StackPanel x:Name="artistPanel">
+                    <Label Content="작가" FontSize="20" FontWeight="Bold" Name="artistLabel"/>
+                    <TextBlock TextWrapping="WrapWithOverflow" VerticalAlignment="Center" Text="ichiri" x:Name="artist" Margin="5 0 0 0"/>
+                </StackPanel>
+                <StackPanel x:Name="seriesPanel">
+                    <Label Content="원작" FontSize="20" FontWeight="Bold" Name="seriesLabel"/>
+                    <TextBlock TextWrapping="WrapWithOverflow" VerticalAlignment="Center" Text="N/A" x:Name="series" Margin="5 0 0 0"/>
+                </StackPanel>
+                <StackPanel x:Name="languagePanel">
+                    <Label Content="언어" FontSize="20" FontWeight="Bold" Name="languageLabel"/>
+                    <Label Content="한국어" x:Name="language" Margin="2 0 0 0"/>
+                </StackPanel>
+                <StackPanel x:Name="tagPanel" MinHeight="{Binding ElementName=tag, Path=ActualHeight}" Width="{Binding ElementName=languagePanel, Path=ActualWidth}">
+                    <Label Content="태그" FontSize="20" FontWeight="Bold" Name="tagLabel" VerticalAlignment="Center"/>
+                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Center" x:Name="tag">
+                        <WrapPanel.MaxWidth>
+                            <MultiBinding Converter="{StaticResource multiWidthConverter}">
+                                <Binding ElementName="tagPanel" Path="ActualWidth"></Binding>
+                                <Binding ElementName="tagLabel" Path="ActualWidth"></Binding>
+                            </MultiBinding>
+                        </WrapPanel.MaxWidth>
+                    </WrapPanel>
+                </StackPanel>
+                <StackPanel x:Name="publishedDatePanel">
+                    <Label Content="업로드 날짜" FontSize="20" FontWeight="Bold" Name="publicLabel"/>
+                    <Label Content="3315년 11월 12일" x:Name="publishedDate" Margin="2 0 0 0"/>
+                </StackPanel>
             </StackPanel>
-            <StackPanel x:Name="artistPanel">
-                <Label Content="작가" FontSize="20" FontWeight="Bold" Name="artistLabel"/>
-                <TextBlock TextWrapping="WrapWithOverflow" Text="ichiri" x:Name="artist" Margin="2 0 0 0"/>
-            </StackPanel>
-            <StackPanel x:Name="seriesPanel">
-                <Label Content="원작" FontSize="20" FontWeight="Bold" Name="seriesLabel"/>
-                <TextBlock TextWrapping="WrapWithOverflow" Text="N/A" x:Name="series" Margin="2 0 0 0"/>
-            </StackPanel>
-            <StackPanel x:Name="languagePanel">
-                <Label Content="언어" FontSize="20" FontWeight="Bold" Name="languageLabel"/>
-                <Label Content="한국어" x:Name="language" Margin="2 0 0 0"/>
-            </StackPanel>
-            <StackPanel x:Name="tagPanel">
-                <Label Content="태그" FontSize="20" FontWeight="Bold" Name="tagLabel"/>
-                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Stretch" x:Name="tag" Margin="5 0 0 0" Height="25"></WrapPanel>
-            </StackPanel>
-            <StackPanel x:Name="publishedDatePanel">
-                <Label Content="업로드 날짜" FontSize="20" FontWeight="Bold" Name="publicLabel"/>
-                <Label Content="3315년 11월 12일" x:Name="publishedDate" Margin="2 0 0 0"/>
-            </StackPanel>
-        </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

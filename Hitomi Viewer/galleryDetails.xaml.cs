@@ -1,6 +1,7 @@
 ﻿using cs_hitomi;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,6 +17,20 @@ using System.Windows.Shapes;
 
 namespace Hitomi_Viewer
 {
+    public class MultiWidthConverter : IMultiValueConverter
+    {
+
+        public object Convert(object[] value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            double width = System.Convert.ToDouble(value[0]) - System.Convert.ToDouble(value[1]);
+            return (width <= 0) ? double.NaN : width;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            return null;
+        }
+    }
 
     /// <summary>
     /// galleryDetails.xaml에 대한 상호 작용 논리
@@ -25,6 +40,7 @@ namespace Hitomi_Viewer
         public galleryDetails(string[] artists, string[] groups, string[] serieses, string type, string language, Tag[] tags, DateTime publishedDate, bool isShort = false)
         {
             InitializeComponent();
+            DataContext = this;
 
             if(isShort)
             {
@@ -74,6 +90,8 @@ namespace Hitomi_Viewer
             }
 
             this.publishedDate.Content = publishedDate.ToString();
+
+            Debug.WriteLine(Convert.ToString(tagPanel.ActualWidth), Convert.ToString(tagLabel.ActualWidth));
         }
     }
 }

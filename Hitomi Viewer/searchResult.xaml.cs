@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Media;
 using System.Windows.Navigation;
+using System.Diagnostics;
 
 namespace Hitomi_Viewer
 {
@@ -38,6 +39,7 @@ namespace Hitomi_Viewer
             var scrollViewer = (ScrollViewer)sender;
             if (scrollViewer.VerticalOffset + 100 >= scrollViewer.ScrollableHeight)
             {
+                Debug.WriteLine("page end");
                 page++;
                 if(!worker.IsBusy) worker.RunWorkerAsync();
             }
@@ -67,7 +69,7 @@ namespace Hitomi_Viewer
                 Dispatcher.Invoke(() =>
                 {
                     galleryInfo infoGallery = new(id, true);
-                    infoGallery.Height = 350;
+                    infoGallery.Height = Double.NaN;
                     Thickness margin = new()
                     {
                         Left = 0,
