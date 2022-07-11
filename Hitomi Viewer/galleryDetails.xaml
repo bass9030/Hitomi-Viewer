@@ -14,35 +14,35 @@
 
     <Grid>
         <StackPanel x:Name="long">
-            <StackPanel x:Name="typePanel">
-                <Label Content="종류" FontSize="20" FontWeight="Bold" Name="typeLabel"/>
+            <StackPanel x:Name="typePanel" Orientation="Horizontal">
+                <Label Content="종류" FontSize="15" FontWeight="Bold" Name="typeLabel"/>
                 <Label Content="manga" x:Name="type" Margin="2 0 0 0"/>
             </StackPanel>
-            <StackPanel x:Name="artistPanel">
-                <Label Content="작가" FontSize="20" FontWeight="Bold" Name="artistLabel"/>
+            <StackPanel x:Name="artistPanel" Orientation="Horizontal">
+                <Label Content="작가" FontSize="15" FontWeight="Bold" Name="artistLabel"/>
                 <TextBlock TextWrapping="WrapWithOverflow" VerticalAlignment="Center" Text="ichiri" x:Name="artist" Margin="5 0 0 0"/>
             </StackPanel>
-            <StackPanel x:Name="seriesPanel">
-                <Label Content="원작" FontSize="20" FontWeight="Bold" Name="seriesLabel"/>
+            <StackPanel x:Name="seriesPanel" Orientation="Horizontal">
+                <Label Content="원작" FontSize="15" FontWeight="Bold" Name="seriesLabel"/>
                 <TextBlock TextWrapping="WrapWithOverflow" VerticalAlignment="Center" Text="N/A" x:Name="series" Margin="5 0 0 0"/>
             </StackPanel>
-            <StackPanel x:Name="languagePanel">
-                <Label Content="언어" FontSize="20" FontWeight="Bold" Name="languageLabel"/>
+            <StackPanel x:Name="languagePanel" Orientation="Horizontal">
+                <Label Content="언어" FontSize="15" FontWeight="Bold" Name="languageLabel"/>
                 <Label Content="한국어" x:Name="language" Margin="2 0 0 0"/>
             </StackPanel>
-            <StackPanel x:Name="tagPanel" MinHeight="{Binding ElementName=tag, Path=ActualHeight}" Width="{Binding ElementName=languagePanel, Path=ActualWidth}">
-                <Label Content="태그" FontSize="20" FontWeight="Bold" Name="tagLabel" VerticalAlignment="Center"/>
-                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center" x:Name="tag">
-                    <WrapPanel.MaxWidth>
+            <DockPanel x:Name="tagPanel" Width="{Binding ElementName=languagePanel, Path=ActualWidth}">
+                <Label Content="태그" FontSize="15" FontWeight="Bold" Name="tagLabel" VerticalAlignment="Center"/>
+                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="5 0 0 0" x:Name="tag">
+                    <!--<WrapPanel.MaxWidth>
                         <MultiBinding Converter="{StaticResource multiWidthConverter}">
                             <Binding ElementName="tagPanel" Path="ActualWidth"></Binding>
                             <Binding ElementName="tagLabel" Path="ActualWidth"></Binding>
                         </MultiBinding>
-                    </WrapPanel.MaxWidth>
+                    </WrapPanel.MaxWidth>-->
                 </WrapPanel>
-            </StackPanel>
-            <StackPanel x:Name="publishedDatePanel">
-                <Label Content="업로드 날짜" FontSize="20" FontWeight="Bold" Name="publicLabel"/>
+            </DockPanel>
+            <StackPanel x:Name="publishedDatePanel" Orientation="Horizontal">
+                <Label Content="업로드 날짜" FontSize="15" FontWeight="Bold" Name="publicLabel"/>
                 <Label Content="3315년 11월 12일" x:Name="publishedDate" Margin="2 0 0 0"/>
             </StackPanel>
         </StackPanel>

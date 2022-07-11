@@ -22,8 +22,9 @@ namespace Hitomi_Viewer
 
         public object Convert(object[] value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
-            double width = System.Convert.ToDouble(value[0]) - System.Convert.ToDouble(value[1]);
-            return (width <= 0) ? double.NaN : width;
+            return System.Convert.ToDouble(value[0]) - System.Convert.ToDouble(value[1]);
+            /*double width = System.Convert.ToDouble(value[0]) - System.Convert.ToDouble(value[1]);
+            return (width <= 0) ? double.NaN : width;*/
         }
 
         public object[] ConvertBack(object value, Type[] targetType, object parameter, System.Globalization.CultureInfo culture)
@@ -42,32 +43,7 @@ namespace Hitomi_Viewer
             InitializeComponent();
             DataContext = this;
 
-            if(isShort)
-            {
-                //@long.Visibility = Visibility.Collapsed;
-                //@short.Visibility = Visibility.Visible;
-                /*List<string> _tags = new List<string>();
-                foreach (Tag tag in tags) _tags.Add(tag.ToString());
-                content.Text =  "종류: " + type + "\n" +
-                    "작가: " + (artists.Length != 0 ? string.Join(", ", artists) : "N/A") + (groups.Length != 0 ? "(" + string.Join(", ", groups) + ")" : "") + "\n" +
-                    ((serieses.Length != 0) ? "원작: " + string.Join(", ", serieses) + "\n" : "") +
-                    "언어: " + language + "\n" +
-                    "태그: " + string.Join(", ", _tags) + "\n" +
-                    "업로드 날짜: " + publishedDate.ToString();*/
-
-                artistPanel.Orientation = Orientation.Horizontal;
-                artistLabel.FontSize = 15;
-                seriesPanel.Orientation = Orientation.Horizontal;
-                seriesLabel.FontSize = 15;
-                typePanel.Orientation = Orientation.Horizontal;
-                typeLabel.FontSize = 15;
-                languagePanel.Orientation = Orientation.Horizontal;
-                languageLabel.FontSize = 15;
-                tagPanel.Orientation = Orientation.Horizontal;
-                tagLabel.FontSize = 15;
-                publishedDatePanel.Orientation = Orientation.Horizontal;
-                publicLabel.FontSize = 15;
-            }
+            SizeChanged += GalleryDetails_SizeChanged;
 
 
             artist.Text = (artists.Length != 0 ? string.Join(", ", artists) + (groups.Length != 0 ? $"({string.Join(", ", groups)})" : "") : "N/A");
@@ -91,7 +67,13 @@ namespace Hitomi_Viewer
 
             this.publishedDate.Content = publishedDate.ToString();
 
-            Debug.WriteLine(Convert.ToString(tagPanel.ActualWidth), Convert.ToString(tagLabel.ActualWidth));
+        }
+
+        private void GalleryDetails_SizeChanged(object sender, SizeChangedEventArgs e)
+        { 
+            /*Debug.WriteLine("{0}", Convert.ToString(tagPanel.ActualWidth - tagLabel.ActualWidth));
+
+            Dispatcher.Invoke(() => tag.MaxWidth = tagPanel.ActualWidth - tagLabel.ActualWidth);*/
         }
     }
 }

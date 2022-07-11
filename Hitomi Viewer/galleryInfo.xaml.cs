@@ -38,13 +38,13 @@ namespace Hitomi_Viewer
         Gallery gallery;
         public onViewClickHandler onViewClick;
         public EventHandler onLoaded;
-        bool isShort = false;
+        bool safeMode = false;
         BackgroundWorker worker = new();
 
-        public galleryInfo(int _galleryNumber, bool isShort = false)
+        public galleryInfo(int _galleryNumber, bool safeMode = false)
         {
             galleryNumber = _galleryNumber;
-            this.isShort = isShort;
+            this.safeMode = safeMode;
             /*try
             {
                 if (Properties.Settings.Default.bookmark == "")
@@ -128,6 +128,7 @@ namespace Hitomi_Viewer
         //      NOT LOADED EVENT FUNCTION
         private void GalleryInfo_Loaded(object sender, DoWorkEventArgs e)
         {
+            //if (safeMode) Dispatcher.Invoke(() => thumbnail.Visibility = Visibility.Hidden);
             while (imgResolver == null)
             {
                 try
@@ -202,8 +203,7 @@ namespace Hitomi_Viewer
                     gallery.type.ToString(), 
                     gallery.languageName.ToString(), 
                     gallery.tags, 
-                    gallery.publishedDate,
-                    isShort
+                    gallery.publishedDate
                 ));
                 View.Visibility = Visibility.Visible;
                 Download.Visibility = Visibility.Visible;
